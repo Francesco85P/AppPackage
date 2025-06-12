@@ -1,4 +1,3 @@
-
 Plot_Visualization <- function(...) {
   
   
@@ -62,8 +61,8 @@ ui  <- page_sidebar(
     sidebar = sidebar(width = "35%",
       selectInput("Genome", "Select the Genome version", selected = NULL,
         choices = c("","GRCh37", "GRCh38")),
-      fileInput("FastCall_Results_1", "Load the CNV calls file"),
-      fileInput("HSLM_1", "If available load the HSLM/TR level CN estimation file"),
+      shiny::fileInput("FastCall_Results_1", "Load the CNV calls file"),
+      shiny::fileInput("HSLM_1", "If available load the HSLM/TR level CN estimation file"),
       checkboxInput("GenomeBrowser", "Show genes annotations", value = FALSE, width = NULL),
       checkboxInput("ShareAxes", "Share x axis", value = TRUE, width = NULL),
       checkboxInput("Set_y_axis", "Set the same Log2R range", value = FALSE, width = NULL),
@@ -108,17 +107,17 @@ ui  <- page_sidebar(
 
 
 server <- function(input, output, session) {
-  bs_themer()
+  bslib::bs_themer()
   # Storing the session for the Download Handler
-  session_store <- reactiveValues()
+  session_store <- shiny::reactiveValues()
   # This variable is updated every time there is a Download and is cached, this allows to download an unpadated plot
-  rv <- reactiveValues(download_flag = 0)
+  rv <- shiny::reactiveValues(download_flag = 0)
   options(warn = -1)
 
   
 # Coordinates -----------------------------------
   
-  Coordinates <- reactive({
+  Coordinates <- shiny::reactive({
     if ( is.null(input$FastCall_Results_1)|input$Genome == "") {
       return(NULL)}
     else{
@@ -137,14 +136,14 @@ server <- function(input, output, session) {
 
 # File and target data first individual -----------------------------------
 
-    file_data_1 <- reactive({
+    file_data_1 <- shiny::reactive({
       if (is.null(input$HSLM_1)) {
       return(NULL)
       }
     else{
-     file_data_1 <- read.table(input$HSLM_1$datapath, fill=T, quote="\"", sep="\t", h = T) |> 
-       select(any_of(c("Chr", "Start", "End", "GC_content", "Mappability", "NRC_poolNorm", "Log2R", "SegMean", "Class", "Chromosome", "Position", "Exon"))) |> 
-         mutate(across(where(is.double), ~ round(.,2)))
+     file_data_1 <- utils::read.table(input$HSLM_1$datapath, fill=T, quote="\"", sep="\t", h = T) |> 
+       select(dplyr::any_of(c("Chr", "Start", "End", "GC_content", "Mappability", "NRC_poolNorm", "Log2R", "SegMean", "Class", "Chromosome", "Position", "Exon"))) |> 
+         mutate(dplyr::across(where(is.double), ~ round(.,2)))
        
        if(is.null(file_data_1$Position)) {
          file_data_1 <- file_data_1 |> 
@@ -170,16 +169,16 @@ server <- function(input, output, session) {
   
 
       
-    fast_call_1 <- reactive({
+    fast_call_1 <- shiny::reactive({
       if (is.null(input$FastCall_Results_1)| input$Genome == "") {
         return(NULL)
         }
       else{
-        fast_call_1 <- read.table(input$FastCall_Results_1$datapath, header = T,
+        fast_call_1 <- utils::read.table(input$FastCall_Results_1$datapath, header = T,
         fill=T, quote="\"") 
         
         fast_call_1 <- fast_call_1 |> 
-        select(any_of(c("Chr", "Chromosome","Start", "End", "Mutation", "CN", "Call",  "ProbCall")))
+        select(dplyr::any_of(c("Chr", "Chromosome","Start", "End", "Mutation", "CN", "Call",  "ProbCall")))
         if(is.null(fast_call_1$Mutation)){
         fast_call_1 <- fast_call_1 |> 
           mutate(Mutation = case_when(
@@ -205,14 +204,14 @@ server <- function(input, output, session) {
 
  # File and FastCall data second individual ----------------------------------
 
-    file_data_2 <- reactive({
+    file_data_2 <- shiny::reactive({
       if (is.null(input$HSLM_2)) {
         return(NULL)
       }
       else{
-        file_data_2 <- read.table(input$HSLM_2$datapath, fill=T, quote="\"", sep="\t", h = T) |> 
-          select(any_of(c("Chr", "Start", "End", "GC_content", "Mappability", "NRC_poolNorm", "Log2R", "SegMean", "Class", "Chromosome", "Position", "Exon"))) |> 
-          mutate(across(where(is.double), ~ round(.,2)))
+        file_data_2 <- utils::read.table(input$HSLM_2$datapath, fill=T, quote="\"", sep="\t", h = T) |> 
+          select(dplyr::any_of(c("Chr", "Start", "End", "GC_content", "Mappability", "NRC_poolNorm", "Log2R", "SegMean", "Class", "Chromosome", "Position", "Exon"))) |> 
+          mutate(dplyr::across(where(is.double), ~ round(.,2)))
         
         if(is.null(file_data_2$Position)) {
           file_data_2 <- file_data_2 |> 
@@ -239,16 +238,16 @@ server <- function(input, output, session) {
     
     
     
-    fast_call_2 <- reactive({
+    fast_call_2 <- shiny::reactive({
       if (is.null(input$FastCall_Results_2)| input$Genome == "" | x$val == 1) {
         return(NULL)
       }
       else{
-        fast_call_2 <- read.table(input$FastCall_Results_2$datapath, header = T,
+        fast_call_2 <- utils::read.table(input$FastCall_Results_2$datapath, header = T,
           fill=T, quote="\"") 
         
         fast_call_2 <- fast_call_2 |> 
-          select(any_of(c("Chr", "Chromosome","Start", "End", "Mutation", "CN", "Call",  "ProbCall")))
+          select(dplyr::any_of(c("Chr", "Chromosome","Start", "End", "Mutation", "CN", "Call",  "ProbCall")))
         if(is.null(fast_call_2$Mutation)){
           fast_call_2 <- fast_call_2 |> 
             mutate(Mutation = case_when(
@@ -275,14 +274,14 @@ server <- function(input, output, session) {
 
 # File and FastCall data third individual -----------------------------------
     
-    file_data_3 <- reactive({
+    file_data_3 <- shiny::reactive({
       if (is.null(input$HSLM_3)) {
         return(NULL)
       }
       else{
-        file_data_3 <- read.table(input$HSLM_3$datapath, fill=T, quote="\"", sep="\t", h = T) |> 
-          select(any_of(c("Chr", "Start", "End", "GC_content", "Mappability", "NRC_poolNorm", "Log2R", "SegMean", "Class", "Chromosome", "Position", "Exon"))) |> 
-          mutate(across(where(is.double), ~ round(.,2)))
+        file_data_3 <- utils::read.table(input$HSLM_3$datapath, fill=T, quote="\"", sep="\t", h = T) |> 
+          select(dplyr::any_of(c("Chr", "Start", "End", "GC_content", "Mappability", "NRC_poolNorm", "Log2R", "SegMean", "Class", "Chromosome", "Position", "Exon"))) |> 
+          mutate(dplyr::across(where(is.double), ~ round(.,2)))
         
         if(is.null(file_data_3$Position)) {
           file_data_3 <- file_data_3 |> 
@@ -309,16 +308,16 @@ server <- function(input, output, session) {
     
     
     
-    fast_call_3 <- reactive({
+    fast_call_3 <- shiny::reactive({
       if (is.null(input$FastCall_Results_3)| input$Genome == "") {
         return(NULL)
       }
       else{
-        fast_call_3 <- read.table(input$FastCall_Results_3$datapath, header = T,
+        fast_call_3 <- utils::read.table(input$FastCall_Results_3$datapath, header = T,
           fill=T, quote="\"") 
         
         fast_call_3 <- fast_call_3 |> 
-          select(any_of(c("Chr", "Chromosome","Start", "End", "Mutation", "CN", "Call",  "ProbCall")))
+          select(dplyr::any_of(c("Chr", "Chromosome","Start", "End", "Mutation", "CN", "Call",  "ProbCall")))
         if(is.null(fast_call_3$Mutation)){
           fast_call_3 <- fast_call_3 |> 
             mutate(Mutation = case_when(
@@ -346,7 +345,7 @@ server <- function(input, output, session) {
 
 #First individual  
 
-  subset_data_1 <- reactive({
+  subset_data_1 <- shiny::reactive({
     
   if(is.null(file_data_1())){return(NULL)}
   else{
@@ -368,9 +367,9 @@ server <- function(input, output, session) {
     subset_data_1 <-  subset_data_1 |>
       mutate(Text = paste( " Log2R: ", Log2R, "<br>", "Start:", Start, "<br>", "End:", End))}
   return(subset_data_1)}
-   }) |> bindCache(input$chr, file_data_1())
+   }) |> shiny::bindCache(input$chr, file_data_1())
   
-  subset_data_1_range <- reactive({  if(is.null(subset_data_1())){return(NULL)}
+  subset_data_1_range <- shiny::reactive({  if(is.null(subset_data_1())){return(NULL)}
     else{
     subset_data_1() |> 
     filter(Start >= input$slider[1] & End <= input$slider[2])}
@@ -379,7 +378,7 @@ server <- function(input, output, session) {
   
 #Second individual 
   
-  subset_data_2 <- reactive({
+  subset_data_2 <- shiny::reactive({
     
     if(is.null(file_data_2())){return(NULL)}
     else{
@@ -401,9 +400,9 @@ server <- function(input, output, session) {
         subset_data_2 <-  subset_data_2 |>
           mutate(Text = paste( " Log2R: ", Log2R, "<br>", "Start:", Start, "<br>", "End:", End))}
       return(subset_data_2)}
-  }) |> bindCache(input$chr, file_data_2())
+  }) |> shiny::bindCache(input$chr, file_data_2())
   
-  subset_data_2_range <- reactive({  if(is.null(file_data_2())){return(NULL)}
+  subset_data_2_range <- shiny::reactive({  if(is.null(file_data_2())){return(NULL)}
     else{
       subset_data_2() |> 
         filter(Start >= input$slider[1] & End <= input$slider[2])}
@@ -411,7 +410,7 @@ server <- function(input, output, session) {
   
 #Third individual  
    
-  subset_data_3 <- reactive({
+  subset_data_3 <- shiny::reactive({
     
     if(is.null(file_data_3())){return(NULL)}
     else{
@@ -433,9 +432,9 @@ server <- function(input, output, session) {
         subset_data_3 <-  subset_data_3 |>
           mutate(Text = paste( " Log2R: ", Log2R, "<br>", "Start:", Start, "<br>", "End:", End))}
       return(subset_data_3)}
-  }) |> bindCache(input$chr, file_data_3())
+  }) |> shiny::bindCache(input$chr, file_data_3())
   
-  subset_data_3_range <- reactive({  if(is.null(file_data_3())){return(NULL)}
+  subset_data_3_range <- shiny::reactive({  if(is.null(file_data_3())){return(NULL)}
     else{
       subset_data_3() |> 
         filter(Start >= input$slider[1] & End <= input$slider[2])}
@@ -444,94 +443,94 @@ server <- function(input, output, session) {
 
 #First individual
   
-rects_1 <- reactive({fast_call_1() |> filter(Chromosome == input$chr)})|>
-    bindCache(input$chr,fast_call_1())
+rects_1 <- shiny::reactive({fast_call_1() |> filter(Chromosome == input$chr)})|>
+    shiny::bindCache(input$chr,fast_call_1())
   
   
-rects_1_range <- reactive ({
+rects_1_range <- shiny::reactive ({
     if (is.null(input$slider)| input$Genome == "") {
       return(NULL)
     }
     else{rects_1_range <- rects_1() |>
       filter(Start >= input$slider[1] & End <= input$slider[2])
     return(rects_1_range)}
-  })|> bindCache(input$slider, rects_1())
+  })|> shiny::bindCache(input$slider, rects_1())
 
 
 #Second individual   
   
-rects_2 <- reactive({fast_call_2() |> filter(Chromosome == input$chr)})|>
-  bindCache(input$chr,fast_call_2())
+rects_2 <- shiny::reactive({fast_call_2() |> filter(Chromosome == input$chr)})|>
+  shiny::bindCache(input$chr,fast_call_2())
   
-  rects_2_range <- reactive ({
+  rects_2_range <- shiny::reactive ({
     if (is.null(input$slider[1])| input$Genome == "") {
       return(NULL)
      }
     else { rects_2() |>
       filter(Start >= input$slider[1] & End <= input$slider[2])}
-   })|> bindCache(input$slider, rects_2())
+   })|> shiny::bindCache(input$slider, rects_2())
    
   
 #Third individual
   
-  rects_3 <- reactive({fast_call_3() |> filter(Chromosome == input$chr)})|>
-    bindCache(input$chr,fast_call_3())
+  rects_3 <- shiny::reactive({fast_call_3() |> filter(Chromosome == input$chr)})|>
+    shiny::bindCache(input$chr,fast_call_3())
   
-  rects_3_range <- reactive ({
+  rects_3_range <- shiny::reactive ({
     if (is.null(input$slider[1])| input$Genome == "") {
      return(NULL)
      }
    else{rects_3() |>
       filter(Start >= input$slider[1] & End <= input$slider[2])}
-   })|> bindCache(input$slider, rects_3())
+   })|> shiny::bindCache(input$slider, rects_3())
  
   
 # Subsetting variants annotations data ---------------------------------------------
  
-  Annot_SV_D <- reactive({
+  Annot_SV_D <- shiny::reactive({
     if(input$AnnotSV){"AnnotSV BenignSV (v. 3.4)"}
     else{return(NULL)}
   })
 
-  DGV_Merge_D <- reactive({
+  DGV_Merge_D <- shiny::reactive({
     if(input$DGV_Merge){
       "dgvMerged (last updated 2020-02-25)"}
     else{return(NULL)}
   })
 
-  DGV_Gold_D <- reactive({
+  DGV_Gold_D <- shiny::reactive({
       if(input$DGV_Gold){
        "dgvGold (last updated 2016-05-15)"}
     else{return(NULL)}
   })
 
-  GnomAD_D <- reactive({
+  GnomAD_D <- shiny::reactive({
     if(input$GnomAD_Genome){
       c("gnomad_v2.1_sv.controls_only.site", "gnomad.v4.1.sv.non_neuro_controls.sites")}
     else{return(NULL)}
   })
   
-  GnomAD_Exome_D <- reactive({
+  GnomAD_Exome_D <- shiny::reactive({
     if(input$GnomAD_Exome){
       GnomAD_Exome_D <-  "gnomad.v4.1.cnv.non_neuro_controls"}
     else{return(NULL)}
   })
   
 
-  Annotations_list <-reactive({
+  Annotations_list <-shiny::reactive({
     Annotations_list<-c(Annot_SV_D(), DGV_Gold_D(), DGV_Merge_D(), GnomAD_D(),  GnomAD_Exome_D())
     Annotations_list
   })
   
-  Annotations_subset <-reactive({
+  Annotations_subset <-shiny::reactive({
     if(input$Genome == "GRCh37"){
       
       Annotations_37 |>  
         filter (Chromosome == input$chr) |> 
-        filter(str_detect(calls, input$Type))|> 
+        filter(stringr::str_detect(calls, input$Type))|> 
         filter(Frequency > input$Freq) |> 
         filter (Database %in%  Annotations_list() ) |> 
-        inner_join(rects_1() , join_by(overlaps(Start, End, Start, End)))|>
+        dplyr::inner_join(rects_1() , dplyr::join_by(overlaps(Start, End, Start, End)))|>
         rename(chr = Chromosome.x, Start =Start.x, End = End.x, End_FastCall = End.y, Start_FastCall = Start.y) |> 
         select("Unique_ID","ID","chr", "Start","Start_FastCall","End_FastCall", "End", "calls", "Length", "Frequency", "Database", "middle", "Frequency", "AnnotSV_Present") |> 
         arrange(End_FastCall, End)}
@@ -540,20 +539,20 @@ rects_2 <- reactive({fast_call_2() |> filter(Chromosome == input$chr)})|>
     else if(input$Genome == "GRCh38"){
       Annotations_38 |>
         filter (Chromosome == input$chr) |> 
-        filter(str_detect(calls, input$Type))|>  
+        filter(stringr::str_detect(calls, input$Type))|>  
         filter(Frequency > input$Freq) |> 
         filter (Database %in% Annotations_list() ) |> 
-        inner_join(rects_1(), join_by(overlaps(Start, End, Start, End)))|>
+        dplyr::inner_join(rects_1(), dplyr::join_by(overlaps(Start, End, Start, End)))|>
         rename(chr = Chromosome.x, Start =Start.x, End = End.x, End_FastCall = End.y, Start_FastCall = Start.y) |> 
         select("Unique_ID","ID","chr", "Start","Start_FastCall","End_FastCall", "End", "calls", "Length", "Frequency", "Database", "middle", "Frequency", "AnnotSV_Present") |> 
         arrange(End_FastCall, End)}
     
     else {return(NULL)}
     
-  }) %>% bindCache (input$Genome, input$chr, input$Type, input$Freq, Annotations_list(), fast_call_1())
+  }) |>  shiny::bindCache (input$Genome, input$chr, input$Type, input$Freq, Annotations_list(), fast_call_1())
   
   
-  CNV1 <- reactive ({
+  CNV1 <- shiny::reactive ({
     if(!is.null(Annotations_subset())){
     if(input$AnnotSV){
       Annotations_subset() |>  filter( AnnotSV_Present == "No")  }
@@ -562,16 +561,16 @@ rects_2 <- reactive({fast_call_2() |> filter(Chromosome == input$chr)})|>
   })
 
   
-  CNV_FC <- reactive({
+  CNV_FC <- shiny::reactive({
     if(!is.null(Annotations_subset())){
       CNV1() |> 
       select(Start_FastCall, End_FastCall) |> 
-      distinct(Start_FastCall, End_FastCall)}
+      dplyr::distinct(Start_FastCall, End_FastCall)}
     else{return(NULL)}
       })
   
 
-  CNV2 <-reactive({
+  CNV2 <-shiny::reactive({
     if(!is.null(CNV1())){
       v <- c(1)
       k = 1
@@ -592,16 +591,16 @@ rects_2 <- reactive({fast_call_2() |> filter(Chromosome == input$chr)})|>
       
            
       CNV2 <- CNV2 |> group_by(Unique_ID) |> 
-             slice(1) |> 
+             dplyr::slice(1) |> 
              ungroup() |> 
-             arrange(n_overlap, desc(round(log10(Length),0)), desc(Frequency))
+             arrange(n_overlap, dplyr::desc(round(log10(Length),0)), dplyr::desc(Frequency))
       CNV2
        
       }}
     else{return(NULL)}
-    }) |> bindCache(CNV1(), CNV_FC())
+    }) |> shiny::bindCache(CNV1(), CNV_FC())
   
-  CNV3 <- reactive({
+  CNV3 <- shiny::reactive({
     if(!is.null(CNV2())){
       v2 <- c(1)
       k2 = 1
@@ -631,12 +630,12 @@ rects_2 <- reactive({fast_call_2() |> filter(Chromosome == input$chr)})|>
       CNV3
       }}
    else{return(NULL)}
-   })|> bindCache(CNV2())
+   })|> shiny::bindCache(CNV2())
   
 
 # Subsetting genes annotations data ---------------------------------------
 
-genes_annotations <-reactive ({
+genes_annotations <-shiny::reactive ({
   if(input$GenomeBrowser){
   
     if (input$Genome == "GRCh37"){
@@ -648,7 +647,7 @@ genes_annotations <-reactive ({
     }
   }
   else(return(NULL))
-  }) |> bindCache(input$Genome, input$chr)
+  }) |> shiny::bindCache(input$Genome, input$chr)
   
   
   rect_1_genes_annotation <- list(
@@ -657,7 +656,7 @@ genes_annotations <-reactive ({
   
   
   
-  rect_genes_annotation <- reactive({
+  rect_genes_annotation <- shiny::reactive({
     rect_genes_annotation_1 <- list()
   for (i in c(1:dim(genes_annotations())[1])) {
     rect_1_genes_annotation[["x0"]] <- genes_annotations()[i,]$Start
@@ -667,14 +666,14 @@ genes_annotations <-reactive ({
   }
     return(rect_genes_annotation_1)
     
-  })|> bindCache(genes_annotations())
+  })|> shiny::bindCache(genes_annotations())
 
 
 # Subsetting exons annotations --------------------------------------------
 
   
   
-  exons_annotations_1 <-reactive({
+  exons_annotations_1 <-shiny::reactive({
     if(input$GenomeBrowser){
       if (input$Genome == "GRCh37"){
         exons <- exons_annotation_37 
@@ -687,13 +686,13 @@ genes_annotations <-reactive ({
       }
       else(return(NULL))}
     else(return(NULL))
-  })|> bindCache(input$Genome)
+  })|> shiny::bindCache(input$Genome)
   
   
-  exons_annotations <-reactive ({
+  exons_annotations <-shiny::reactive ({
     if (dim(rects_1())[1]>0){
       genes <- genes_annotations() |> 
-        inner_join(rects_1() , join_by(overlaps(Start, End, Start, End))) 
+        dplyr::inner_join(rects_1() , dplyr::join_by(overlaps(Start, End, Start, End))) 
       
       exons <- exons_annotations_1() |> 
         filter (Chr == input$chr) |> 
@@ -703,7 +702,7 @@ genes_annotations <-reactive ({
     }
     else(return(NULL))
     
-  })|> bindCache(input$chr, genes_annotations(), exons_annotations_1())
+  })|> shiny::bindCache(input$chr, genes_annotations(), exons_annotations_1())
   
   
       rect_1_exons_annotation <- list(
@@ -714,7 +713,7 @@ genes_annotations <-reactive ({
       
       
       
-      rect_exons_annotation <- reactive({
+      rect_exons_annotation <- shiny::reactive({
       if(!is.null(exons_annotations())){
           if(dim(exons_annotations())[1] >0){
         
@@ -730,35 +729,35 @@ genes_annotations <-reactive ({
           }
         else{return(NULL)}}
         else{return(NULL)}
-      }) |> bindCache(exons_annotations())
+      }) |> shiny::bindCache(exons_annotations())
     
 
       
-shapes <- reactive({
+shapes <- shiny::reactive({
   c(rect_genes_annotation(), rect_exons_annotation())
-  }) |> bindCache(rect_genes_annotation(), rect_exons_annotation())
+  }) |> shiny::bindCache(rect_genes_annotation(), rect_exons_annotation())
       
 # First button -------------------------------------------------------
 
-   x <- reactiveValues(val = 1)
+   x <- shiny::reactiveValues(val = 1)
    
-   observeEvent(input$Button_1, {
+   shiny::observeEvent(input$Button_1, {
      x$val = x$val *(-1) 
    })
    
-   output$Button_1  =renderUI({
+   output$Button_1  =shiny::renderUI({
      if(x$val == 1){
-      actionButton("Button_1", "Add new sample")
+      shiny::actionButton("Button_1", "Add new sample")
        }
-     else { actionButton("Button_1", "Remove sample")}
+     else { shiny::actionButton("Button_1", "Remove sample")}
    })
    
    
-    output$Second_Individual=renderUI({
+    output$Second_Individual=shiny::renderUI({
       if(x$val == -1){list(
         
-        fileInput("FastCall_Results_2", "Load the CNV calls file"),
-        fileInput("HSLM_2", "If available load the HSLM/TR level CN estimation file"))
+        shiny::fileInput("FastCall_Results_2", "Load the CNV calls file"),
+        shiny::fileInput("HSLM_2", "If available load the HSLM/TR level CN estimation file"))
         
         }
       else{return(NULL)}
@@ -771,35 +770,35 @@ shapes <- reactive({
 
     
     
-    z <- reactiveValues(val = 1)
+    z <- shiny::reactiveValues(val = 1)
     
-    observeEvent(input$Button_2, {
+    shiny::observeEvent(input$Button_2, {
       z$val = z$val *(-1) 
     })
     
     
-    A <- reactive({      
+    A <- shiny::reactive({      
       if (is.null(input$FastCall_Results_2)){return(NULL)}
       
       else if (is.null(fast_call_2())){return(NULL)}
       
       else if (z$val == 1){
-        actionButton("Button_2", "Add new sample") }
+        shiny::actionButton("Button_2", "Add new sample") }
       
-      else { actionButton("Button_2", "Remove sample")} 
+      else { shiny::actionButton("Button_2", "Remove sample")} 
     })
     
-    output$Button_2  <- renderUI({
+    output$Button_2  <- shiny::renderUI({
       K = A()
       return(K)
     }) 
     
     
-    output$Third_Individual=renderUI({
+    output$Third_Individual=shiny::renderUI({
       if(z$val == -1){list(
         
-        fileInput("FastCall_Results_3", "Load the CNV calls file"),
-        fileInput("HSLM_3", "If available load the HSLM/TR level CN estimation file"))
+        shiny::fileInput("FastCall_Results_3", "Load the CNV calls file"),
+        shiny::fileInput("HSLM_3", "If available load the HSLM/TR level CN estimation file"))
       }
       else{return(NULL)}
       
@@ -809,28 +808,28 @@ shapes <- reactive({
 
 # Setting the range slider for coordinates------------------------------------------------
    
-output$limits=renderUI({
+output$limits=shiny::renderUI({
       if (is.null(input$FastCall_Results_1)|input$Genome == "") {
         return(NULL)}
       else{
         
-        sliderInput('slider','Choose the chromosome coordinates for the download',
+        shiny::sliderInput('slider','Choose the chromosome coordinates for the download',
           min=1,
           max=Coordinates()$End,
           value=c(1,
             Coordinates()$End))}
-    }) |> bindCache(Coordinates())
+    }) |> shiny::bindCache(Coordinates())
     
 
 
 # Setting the range slider for annotations --------------------------------
 
     
-    output$Annotations_limits=renderUI({
+    output$Annotations_limits=shiny::renderUI({
       if (!is.null(input$FastCall_Results_1)){
         if(!(is.null(CNV3()))){
           if (dim(CNV3())[1] >0){
-            sliderInput('slider_Annotations',
+            shiny::sliderInput('slider_Annotations',
             'Choose the maximum number of overlapping CNVs to visualize',
             min=0,
             max=max(CNV3()$level),
@@ -847,10 +846,10 @@ output$limits=renderUI({
 # Download ----------------------------------------------------------------
 
 
-output$Download = renderUI({
+output$Download = shiny::renderUI({
   if (!is.null(input$FastCall_Results_1)){
     if (input$Genome  != ""){
-      downloadButton("downloadplot", "Download HTML")}
+      shiny::downloadButton("downloadplot", "Download HTML")}
   }
   else{return(NULL)}
   })
@@ -859,30 +858,30 @@ output$Download = renderUI({
 
 # pal 1---------------------------------------------------------------------
 
-    pal_1 <- reactive({
+    pal_1 <- shiny::reactive({
       if(is.null(subset_data_1_range())){return (NULL)}
       
       else if("IN" %in% subset_data_1_range()$Class){
         pal_1 <- c("blue", "lightblue")
-        pal_1 <- setNames(pal_1, c("IN", "OUT"))
+        pal_1 <- stats::setNames(pal_1, c("IN", "OUT"))
       }
       else{pal_1 <- c("blue")
-        pal_1 <- setNames(pal_1, c("Yes"))
+        pal_1 <- stats::setNames(pal_1, c("Yes"))
       }
       return(pal_1)
     }) 
 
 # pal 2---------------------------------------------------------------------
     
-    pal_2 <- reactive({
+    pal_2 <- shiny::reactive({
       if(is.null(subset_data_2_range())){return (NULL)}
       
       else if("IN" %in% subset_data_2_range()$Class){
         pal_2 <- c("blue", "lightblue")
-        pal_2 <- setNames(pal_2, c("IN", "OUT"))
+        pal_2 <- stats::setNames(pal_2, c("IN", "OUT"))
       }
       else{pal_2 <- c("blue")
-      pal_2 <- setNames(pal_2, c("Yes"))
+      pal_2 <- stats::setNames(pal_2, c("Yes"))
       }
       return(pal_2)
     }) 
@@ -890,22 +889,22 @@ output$Download = renderUI({
     
 # pal 3---------------------------------------------------------------------
     
-    pal_3 <- reactive({
+    pal_3 <- shiny::reactive({
       if(is.null(subset_data_3_range())){return (NULL)}
       
       else if("IN" %in% subset_data_3_range()$Class){
         pal_3 <- c("blue", "lightblue")
-        pal_3 <- setNames(pal_3, c("IN", "OUT"))
+        pal_3 <- stats::setNames(pal_3, c("IN", "OUT"))
       }
       else{pal_3 <- c("blue")
-      pal_3 <- setNames(pal_3, c("Yes"))
+      pal_3 <- stats::setNames(pal_3, c("Yes"))
       }
       return(pal_3)
     }) 
 
 # Plot variants --------------------------------------------------------
 
-    output$zoomPlot <- renderPlotly({
+    output$zoomPlot <- plotly::renderPlotly({
       
      
      
@@ -980,25 +979,25 @@ if(!(is.null(input$FastCall_Results_1) | is.null(input$slider_Annotations[1])|
        max=input$slider[2])),
           yaxis = list(title = "Polymorphisms",range =list((input$slider_Annotations[1]),
           (input$slider_Annotations[2])), tickformat=',d'))|>
-    add_trace(data = CNV_Gain, type = 'scatter', mode = 'markers', x =  ~End, y = ~level -0.3, color = I("blue"),
+    plotly::add_trace(data = CNV_Gain, type = 'scatter', mode = 'markers', x =  ~End, y = ~level -0.3, color = I("blue"),
                         text = ~paste(" Database:", Database, "<br>", "ID:", ID, "<br>", "Start:", Start, "<br>", 
                         "End:", End, "<br>", "Length: ", Length, "<br>",
                         "Reported frequency: ", Frequency),
                         hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                         hoverlabel = list(bgcolor = "blue", align = "left"))|>
-    add_trace(data = CNV_Loss, type = 'scatter', mode = 'markers', x = ~End, y = ~level -0.3,color = I("orange"),
+    plotly::add_trace(data = CNV_Loss, type = 'scatter', mode = 'markers', x = ~End, y = ~level -0.3,color = I("orange"),
                         text = ~paste(" Database:", Database, "<br>", "ID:", ID, "<br>", "Start:", Start, "<br>", 
                         "End:", End, "<br>", "Length: ", Length,"<br>",
                         "Reported frequency: ", Frequency),
                         hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                         hoverlabel = list(bgcolor ="orange", align = "left")) |> 
-     partial_bundle()  |>  toWebGL()
+     plotly::partial_bundle()  |>  plotly::toWebGL()
   }
   }
   else{
     fig <- plot_ly(type = 'scatter', mode = "markers") |> 
       layout( yaxis = list(range =list(0, 20))) |> 
-      partial_bundle()  |>  toWebGL()
+      plotly::partial_bundle()  |>  plotly::toWebGL()
   }
 }
 
@@ -1020,13 +1019,13 @@ if(input$GenomeBrowser){
           ticktext = c('+', '\u2212'),  tickfont = list(size = 20, family = "Arial black"))) 
   
 if(!is.null(exons_annotations())){
-  fig2 <- fig2 |>  add_trace(data = exons_annotations(), type = 'scatter', mode = 'markers', x =  ~Start, y = ~level + 0.3, color = I("#008000"),
+  fig2 <- fig2 |>  plotly::add_trace(data = exons_annotations(), type = 'scatter', mode = 'markers', x =  ~Start, y = ~level + 0.3, color = I("#008000"),
     opacity =0.4,  text = ~paste(" RefSeq ID:", RefSeq_ID, "<br>", "Gene Symbol:", Gene_Symbol, "<br>",
       "Exon:",  Exon_number, "<br>","Exon Start:", Start, "<br>", "Exon End:", End, "<br>", "Direction:", Direction),
     hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
     hoverlabel = list(bgcolor = "#008000", opacity = 0.4, align = "left"))
 }
-        fig2 |>  partial_bundle()  |>  toWebGL()
+        fig2 |>  plotly::partial_bundle()  |>  plotly::toWebGL()
   }
  
 # Plot for first individual -----------------------------------------------
@@ -1150,41 +1149,41 @@ if(!is.null(exons_annotations())){
        if(!is.null(subset_data_1_range())){
          
          pl_1 <- pl_1 |> 
-       add_trace(data = subset_data_1_range(), x = ~Position, y = ~Log2R,  color = ~Class, colors =pal_1(), type = 'scatter', mode = "markers",
+       plotly::add_trace(data = subset_data_1_range(), x = ~Position, y = ~Log2R,  color = ~Class, colors =pal_1(), type = 'scatter', mode = "markers",
         text = ~Text,
         hoverinfo = "text",
         marker =list(size = 4),showlegend = F)}
          
-      pl_1 <- pl_1 |> add_trace(type = 'bar', 
+      pl_1 <- pl_1 |> plotly::add_trace(type = 'bar', 
          x = 0, 
          y = 0, 
          name = "DEL", 
          color= I("#E69f00"),
          opacity = 0.6) |> 
-      add_trace(type = 'bar', 
+      plotly::add_trace(type = 'bar', 
          x = 0, 
          y = 0, 
          name = "AMP", 
          color = I("#56B4E9"),
         opacity = 0.6)|>
-      add_trace(type = 'bar', 
+      plotly::add_trace(type = 'bar', 
          x = 0, 
          y = 0, 
          name = "2_DEL", 
          color = I("#D55e00"),
          opacity = 0.6)|> 
-      add_trace(type = 'bar', 
+      plotly::add_trace(type = 'bar', 
         x = 0, 
         y = 0, 
         name = "2_AMP", 
         color= I("#0072B2"),
         opacity = 0.6) |> 
-      add_trace(type = 'bar', 
+      plotly::add_trace(type = 'bar', 
         x = 0, 
         y = 0, 
        name = "Gain CNVs from selected databases", 
        color= I("blue"))|>
-    add_trace(type = 'bar', 
+    plotly::add_trace(type = 'bar', 
       x = 0, 
       y = 0, 
      name = "Loss CNVs from selected databases", 
@@ -1215,124 +1214,124 @@ if(!is.null(exons_annotations())){
   
 
        if (dim(rects_2DEL)[1] >0){
-       pl_1<- pl_1|> add_trace(data = rects_2DEL,  type = 'scatter', mode = 'markers', x =  ~End, y =  max(ceiling(max(subset_data_1()$Log2R)+1.5),5),   color = I("#D55e00"), opacity = 0.6,
+       pl_1<- pl_1|> plotly::add_trace(data = rects_2DEL,  type = 'scatter', mode = 'markers', x =  ~End, y =  max(ceiling(max(subset_data_1()$Log2R)+1.5),5),   color = I("#D55e00"), opacity = 0.6,
          text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
            "CN: ", CN, "<br>", "Call: ", Call, "<br>",
            "ProbCall: ", round(ProbCall,2)),
                              hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                              hoverlabel = list(bgcolor = "#D55e00"))|>
-                 add_trace(data = rects_2DEL, type = 'scatter', mode = 'markers', x =  ~Start, y = max(ceiling(max(subset_data_1()$Log2R)+1.5),5),   color = I("#D55e00"), opacity = 0.6,
+                 plotly::add_trace(data = rects_2DEL, type = 'scatter', mode = 'markers', x =  ~Start, y = max(ceiling(max(subset_data_1()$Log2R)+1.5),5),   color = I("#D55e00"), opacity = 0.6,
                    text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                      "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                      "ProbCall: ", round(ProbCall,2)),
                             hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                             hoverlabel = list(bgcolor = "#D55e00") ) |> 
-                add_trace(data = rects_2DEL, type = 'scatter', mode = 'markers', x =  ~Start, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5),   color = I("#D55e00"), opacity = 0.6,
+                plotly::add_trace(data = rects_2DEL, type = 'scatter', mode = 'markers', x =  ~Start, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5),   color = I("#D55e00"), opacity = 0.6,
                   text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                     "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                     "ProbCall: ", round(ProbCall,2)),
                             hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                             hoverlabel = list(bgcolor = "#D55e00")) |> 
-                add_trace(data = rects_2DEL, type = 'scatter', mode = 'markers', x =  ~End, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5),   color = I("#D55e00"), opacity = 0.6,
+                plotly::add_trace(data = rects_2DEL, type = 'scatter', mode = 'markers', x =  ~End, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5),   color = I("#D55e00"), opacity = 0.6,
                   text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                     "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                     "ProbCall: ", round(ProbCall,2)),
                                hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                hoverlabel = list(bgcolor = "#D55e00")) |> 
-               add_trace(data = rects_2DEL, type = 'scatter', mode = 'markers', x =  ~mid, y =  0,   color = I("#D55e00"), opacity = 0.6,
+               plotly::add_trace(data = rects_2DEL, type = 'scatter', mode = 'markers', x =  ~mid, y =  0,   color = I("#D55e00"), opacity = 0.6,
                  text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                    "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                    "ProbCall: ", round(ProbCall,2)),
                                hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                hoverlabel = list(bgcolor = "#D55e00"))}
        if (dim(rects_DEL)[1] >0){
-         pl_1<- pl_1|> add_trace(data = rects_DEL, type = 'scatter', mode = 'markers', x =  ~End, y =  max(ceiling(max(subset_data_1()$Log2R)+1.5),5),  color = I("#E69f00"), opacity = 0.6,
+         pl_1<- pl_1|> plotly::add_trace(data = rects_DEL, type = 'scatter', mode = 'markers', x =  ~End, y =  max(ceiling(max(subset_data_1()$Log2R)+1.5),5),  color = I("#E69f00"), opacity = 0.6,
            text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
              "CN: ", CN, "<br>", "Call: ", Call, "<br>",
              "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#E69f00") ) |> 
-                    add_trace(data = rects_DEL, type = 'scatter', mode = 'markers', x =  ~End, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5),  color = I("#E69f00"), opacity = 0.6,
+                    plotly::add_trace(data = rects_DEL, type = 'scatter', mode = 'markers', x =  ~End, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5),  color = I("#E69f00"), opacity = 0.6,
                       text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                         "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                         "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#E69f00")) |> 
-                     add_trace(data = rects_DEL,  type = 'scatter', mode = 'markers', x =  ~Start, y = min(floor(min(subset_data_1()$Log2R) - 0.5), -5),  color = I("#E69f00"), opacity = 0.6,
+                     plotly::add_trace(data = rects_DEL,  type = 'scatter', mode = 'markers', x =  ~Start, y = min(floor(min(subset_data_1()$Log2R) - 0.5), -5),  color = I("#E69f00"), opacity = 0.6,
                        text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                          "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                          "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#E69f00")) |>  
-                  add_trace(data = rects_DEL, type = 'scatter', mode = 'markers',  x =  ~Start, y =  max(ceiling(max(subset_data_1()$Log2R)+1.5),5),  color = I("#E69f00"), opacity = 0.6,
+                  plotly::add_trace(data = rects_DEL, type = 'scatter', mode = 'markers',  x =  ~Start, y =  max(ceiling(max(subset_data_1()$Log2R)+1.5),5),  color = I("#E69f00"), opacity = 0.6,
                     text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                       "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                       "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#E69f00")) |> 
-                  add_trace(data = rects_DEL, type = 'scatter', mode = 'markers', x =  ~mid, y = 0,  color = I("#E69f00"), opacity = 0.6,
+                  plotly::add_trace(data = rects_DEL, type = 'scatter', mode = 'markers', x =  ~mid, y = 0,  color = I("#E69f00"), opacity = 0.6,
                     text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                       "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                       "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#E69f00")) }
        if (dim(rects_AMP)[1] >0){
-         pl_1<- pl_1|> add_trace(data = rects_AMP,  type = 'scatter', mode = 'markers', x =  ~End, y =  max(ceiling(max(subset_data_1()$Log2R)+1.5),5),  color = I("#56B4E9"), opacity = 0.6,
+         pl_1<- pl_1|> plotly::add_trace(data = rects_AMP,  type = 'scatter', mode = 'markers', x =  ~End, y =  max(ceiling(max(subset_data_1()$Log2R)+1.5),5),  color = I("#56B4E9"), opacity = 0.6,
            text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
              "CN: ", CN, "<br>", "Call: ", Call, "<br>",
              "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#56B4E9")) |> 
-                       add_trace(data = rects_AMP, type = 'scatter', mode = 'markers',  x =  ~End, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5),  color = I("#56B4E9"), opacity = 0.6,
+                       plotly::add_trace(data = rects_AMP, type = 'scatter', mode = 'markers',  x =  ~End, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5),  color = I("#56B4E9"), opacity = 0.6,
                          text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                            "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                            "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#56B4E9")) |> 
-                      add_trace(data = rects_AMP,  type = 'scatter', mode = 'markers', x =  ~Start, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5),  color = I("#56B4E9"), opacity = 0.6,
+                      plotly::add_trace(data = rects_AMP,  type = 'scatter', mode = 'markers', x =  ~Start, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5),  color = I("#56B4E9"), opacity = 0.6,
                         text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                           "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                           "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#56B4E9")) |> 
-                      add_trace(data = rects_AMP, type = 'scatter', mode = 'markers',  x =  ~Start, y =  max(ceiling(max(subset_data_1()$Log2R)+1.5),5),  color = I("#56B4E9"), opacity = 0.6,
+                      plotly::add_trace(data = rects_AMP, type = 'scatter', mode = 'markers',  x =  ~Start, y =  max(ceiling(max(subset_data_1()$Log2R)+1.5),5),  color = I("#56B4E9"), opacity = 0.6,
                         text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                           "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                           "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#56B4E9")) |> 
-                    add_trace(data = rects_AMP,  type = 'scatter', mode = 'markers', x =  ~mid, y = 0,  color = I("#56B4E9"), opacity = 0.6,
+                    plotly::add_trace(data = rects_AMP,  type = 'scatter', mode = 'markers', x =  ~mid, y = 0,  color = I("#56B4E9"), opacity = 0.6,
                       text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                         "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                         "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#56B4E9"))}
         if (dim(rects_2AMP)[1] >0){
-         pl_1<- pl_1|> add_trace(data = rects_2AMP,  type = 'scatter', mode = 'markers', x =  ~End, y =  max(ceiling(max(subset_data_1()$Log2R)+1.5),5), color = I("#0072B2"), opacity = 0.6,
+         pl_1<- pl_1|> plotly::add_trace(data = rects_2AMP,  type = 'scatter', mode = 'markers', x =  ~End, y =  max(ceiling(max(subset_data_1()$Log2R)+1.5),5), color = I("#0072B2"), opacity = 0.6,
            text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
              "CN: ", CN, "<br>", "Call: ", Call, "<br>",
              "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#0072B2")) |> 
-                         add_trace(data = rects_2AMP, type = 'scatter', mode = 'markers',  x =  ~End, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5), color = I("#0072B2"), opacity = 0.6,
+                         plotly::add_trace(data = rects_2AMP, type = 'scatter', mode = 'markers',  x =  ~End, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5), color = I("#0072B2"), opacity = 0.6,
                            text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                              "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                              "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#0072B2")) |> 
-                          add_trace(data = rects_2AMP,  type = 'scatter', mode = 'markers', x =  ~Start, y =  max(ceiling(max(subset_data_1()$Log2R)+1.5),5), color = I("#0072B2"), opacity = 0.6,
+                          plotly::add_trace(data = rects_2AMP,  type = 'scatter', mode = 'markers', x =  ~Start, y =  max(ceiling(max(subset_data_1()$Log2R)+1.5),5), color = I("#0072B2"), opacity = 0.6,
                             text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                               "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                               "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#0072B2")) |> 
-                          add_trace(data = rects_2AMP,  type = 'scatter', mode = 'markers', x =  ~Start, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5), color = I("#0072B2"), opacity = 0.6,
+                          plotly::add_trace(data = rects_2AMP,  type = 'scatter', mode = 'markers', x =  ~Start, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5), color = I("#0072B2"), opacity = 0.6,
                             text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                               "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                               "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#0072B2")) |> 
-                           add_trace(data = rects_2AMP, type = 'scatter', mode = 'markers',  x =  ~mid, y =  0, color = I("#0072B2"), opacity = 0.6,
+                           plotly::add_trace(data = rects_2AMP, type = 'scatter', mode = 'markers',  x =  ~mid, y =  0, color = I("#0072B2"), opacity = 0.6,
                              text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                                "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                                "ProbCall: ", round(ProbCall,2)),
@@ -1367,14 +1366,14 @@ if(!is.null(exons_annotations())){
        
        if(input$GenomeBrowser){
          if (input$Genome == "GRCh38"){
-           pl_1<-pl_1|>  add_trace(type = 'bar',
+           pl_1<-pl_1|>  plotly::add_trace(type = 'bar',
                                    x = 0,
                                    y = 0,
                                    name = "Genes annotation from MANE_RefSEq v 1.3",
                                    color= I("#008000"))}
          
          if (input$Genome == "GRCh37"){
-           pl_1<-pl_1|>  add_trace(type = 'bar',
+           pl_1<-pl_1|>  plotly::add_trace(type = 'bar',
                                    x = 0,
                                    y = 0,
                                    name = "Genes annotation from ncbi RefSeq Select \n(last updated 2022-03-16)",
@@ -1384,11 +1383,11 @@ if(!is.null(exons_annotations())){
         
         if(input$GenomeBrowser){
       
-        pl<-subplot(fig2,pl_1, fig, nrows =3,heights = c(1/6,2/6,3/6),shareX = TRUE, titleY  = TRUE)}
+        pl<-plotly::subplot(fig2,pl_1, fig, nrows =3,heights = c(1/6,2/6,3/6),shareX = TRUE, titleY  = TRUE)}
         
-        else{ pl<-subplot(pl_1, fig, nrows =2,heights = c(1/2,1/2),shareX = TRUE, titleY  = TRUE)}
+        else{ pl<-plotly::subplot(pl_1, fig, nrows =2,heights = c(1/2,1/2),shareX = TRUE, titleY  = TRUE)}
       
-      pl_1 <- pl_1 |>  partial_bundle()  |>  toWebGL()
+      pl_1 <- pl_1 |>  plotly::partial_bundle()  |>  plotly::toWebGL()
       } 
   
 
@@ -1526,7 +1525,7 @@ if(!is.null(exons_annotations())){
        if(!is.null(subset_data_2_range())){
          
          pl_2 <- pl_2 |> 
-           add_trace(data = subset_data_2_range(), x = ~Position, y = ~Log2R,  color = ~Class, colors =pal_2(), type = 'scatter', mode = "markers",
+           plotly::add_trace(data = subset_data_2_range(), x = ~Position, y = ~Log2R,  color = ~Class, colors =pal_2(), type = 'scatter', mode = "markers",
              text = ~Text,
              hoverinfo = "text",
              marker =list(size = 4),showlegend = F)}
@@ -1554,62 +1553,62 @@ if(!is.null(exons_annotations())){
        
 
        if (dim(rects_2DEL)[1] >0){
-         pl_2<- pl_2|> add_trace(data = rects_2DEL, type = 'scatter', mode = 'markers', x =  ~End, y =  max(ceiling(max(subset_data_2()$Log2R)+1.5),5),   color = I("#D55e00"),opacity = 0.6,
+         pl_2<- pl_2|> plotly::add_trace(data = rects_2DEL, type = 'scatter', mode = 'markers', x =  ~End, y =  max(ceiling(max(subset_data_2()$Log2R)+1.5),5),   color = I("#D55e00"),opacity = 0.6,
            text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
              "CN: ", CN, "<br>", "Call: ", Call, "<br>",
              "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#D55e00")) |> 
-                    add_trace(data = rects_2DEL, type = 'scatter', mode = 'markers', x =  ~Start, y =  max(ceiling(max(subset_data_2()$Log2R)+1.5),5),   color = I("#D55e00"),opacity = 0.6,
+                    plotly::add_trace(data = rects_2DEL, type = 'scatter', mode = 'markers', x =  ~Start, y =  max(ceiling(max(subset_data_2()$Log2R)+1.5),5),   color = I("#D55e00"),opacity = 0.6,
                       text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                         "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                         "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#D55e00")) |> 
-                     add_trace(data = rects_2DEL,type = 'scatter', mode = 'markers', x =  ~Start, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5),   color = I("#D55e00"),opacity = 0.6,
+                     plotly::add_trace(data = rects_2DEL,type = 'scatter', mode = 'markers', x =  ~Start, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5),   color = I("#D55e00"),opacity = 0.6,
                        text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                          "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                          "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#D55e00")) |> 
-                     add_trace(data = rects_2DEL, type = 'scatter', mode = 'markers',x =  ~End, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5),   color = I("#D55e00"),opacity = 0.6,
+                     plotly::add_trace(data = rects_2DEL, type = 'scatter', mode = 'markers',x =  ~End, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5),   color = I("#D55e00"),opacity = 0.6,
                        text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                          "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                          "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#D55e00"))|> 
-                    add_trace(data = rects_2DEL, type = 'scatter', mode = 'markers', x =  ~mid, y =  0,   color = I("#D55e00"),opacity = 0.6,
+                    plotly::add_trace(data = rects_2DEL, type = 'scatter', mode = 'markers', x =  ~mid, y =  0,   color = I("#D55e00"),opacity = 0.6,
                       text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                         "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                         "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#D55e00"))}
      if (dim(rects_DEL)[1] >0){
-         pl_2<- pl_2|> add_trace(data = rects_DEL,  type = 'scatter', mode = 'markers',x =  ~End, y =  max(ceiling(max(subset_data_2()$Log2R)+1.5),5),  color = I("#E69f00"),opacity = 0.6,
+         pl_2<- pl_2|> plotly::add_trace(data = rects_DEL,  type = 'scatter', mode = 'markers',x =  ~End, y =  max(ceiling(max(subset_data_2()$Log2R)+1.5),5),  color = I("#E69f00"),opacity = 0.6,
            text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
              "CN: ", CN, "<br>", "Call: ", Call, "<br>",
              "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#E69f00")) |> 
-                    add_trace(data = rects_DEL, type = 'scatter', mode = 'markers', x =  ~End, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5),  color = I("#E69f00"),opacity = 0.6,
+                    plotly::add_trace(data = rects_DEL, type = 'scatter', mode = 'markers', x =  ~End, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5),  color = I("#E69f00"),opacity = 0.6,
                       text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                         "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                         "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#E69f00")) |> 
-                    add_trace(data = rects_DEL, type = 'scatter', mode = 'markers', x =  ~Start, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5),  color = I("#E69f00"),opacity = 0.6,
+                    plotly::add_trace(data = rects_DEL, type = 'scatter', mode = 'markers', x =  ~Start, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5),  color = I("#E69f00"),opacity = 0.6,
                       text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                         "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                         "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#E69f00")) |> 
-                    add_trace(data = rects_DEL, type = 'scatter', mode = 'markers', x =  ~Start, y =  max(ceiling(max(subset_data_2()$Log2R)+1.5),5),  color = I("#E69f00"),opacity = 0.6,
+                    plotly::add_trace(data = rects_DEL, type = 'scatter', mode = 'markers', x =  ~Start, y =  max(ceiling(max(subset_data_2()$Log2R)+1.5),5),  color = I("#E69f00"),opacity = 0.6,
                       text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                         "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                         "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#E69f00")) |> 
-                     add_trace(data = rects_DEL, type = 'scatter', mode = 'markers', x =  ~mid, y = 0,  color = I("#E69f00"), opacity = 0.6,
+                     plotly::add_trace(data = rects_DEL, type = 'scatter', mode = 'markers', x =  ~mid, y = 0,  color = I("#E69f00"), opacity = 0.6,
                        text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                          "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                          "ProbCall: ", round(ProbCall,2)),
@@ -1617,62 +1616,62 @@ if(!is.null(exons_annotations())){
                                  hoverlabel = list(bgcolor = "#E69f00")) }
 
        if (dim(rects_AMP)[1] >0){
-         pl_2<- pl_2|> add_trace(data = rects_AMP, type = 'scatter', mode = 'markers',  x =  ~End, y =  max(ceiling(max(subset_data_2()$Log2R)+1.5),5),  color = I("#56B4E9"), opacity = 0.6,
+         pl_2<- pl_2|> plotly::add_trace(data = rects_AMP, type = 'scatter', mode = 'markers',  x =  ~End, y =  max(ceiling(max(subset_data_2()$Log2R)+1.5),5),  color = I("#56B4E9"), opacity = 0.6,
            text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
              "CN: ", CN, "<br>", "Call: ", Call, "<br>",
              "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#56B4E9")) |> 
-                    add_trace(data = rects_AMP, type = 'scatter', mode = 'markers',  x =  ~End, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5),  color = I("#56B4E9"), opacity = 0.6,
+                    plotly::add_trace(data = rects_AMP, type = 'scatter', mode = 'markers',  x =  ~End, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5),  color = I("#56B4E9"), opacity = 0.6,
                       text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                         "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                         "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#56B4E9")) |> 
-                    add_trace(data = rects_AMP, type = 'scatter', mode = 'markers',  x =  ~Start, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5),  color = I("#56B4E9"), opacity = 0.6,
+                    plotly::add_trace(data = rects_AMP, type = 'scatter', mode = 'markers',  x =  ~Start, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5),  color = I("#56B4E9"), opacity = 0.6,
                       text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                         "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                         "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#56B4E9")) |> 
-                     add_trace(data = rects_AMP, type = 'scatter', mode = 'markers', x =  ~Start, y =  max(ceiling(max(subset_data_2()$Log2R)+1.5),5),  color = I("#56B4E9"), opacity = 0.6,
+                     plotly::add_trace(data = rects_AMP, type = 'scatter', mode = 'markers', x =  ~Start, y =  max(ceiling(max(subset_data_2()$Log2R)+1.5),5),  color = I("#56B4E9"), opacity = 0.6,
                        text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                          "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                          "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#56B4E9")) |> 
-                     add_trace(data = rects_AMP, type = 'scatter', mode = 'markers', x =  ~mid, y = 0,  color = I("#56B4E9"), opacity = 0.6,
+                     plotly::add_trace(data = rects_AMP, type = 'scatter', mode = 'markers', x =  ~mid, y = 0,  color = I("#56B4E9"), opacity = 0.6,
                        text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                          "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                          "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#56B4E9"))}
        if (dim(rects_2AMP)[1] >0){
-         pl_2<- pl_2|> add_trace(data = rects_2AMP, type = 'scatter', mode = 'markers',  x =  ~End, y =  max(ceiling(max(subset_data_2()$Log2R)+1.5),5), color = I("#0072B2"), opacity = 0.6,
+         pl_2<- pl_2|> plotly::add_trace(data = rects_2AMP, type = 'scatter', mode = 'markers',  x =  ~End, y =  max(ceiling(max(subset_data_2()$Log2R)+1.5),5), color = I("#0072B2"), opacity = 0.6,
            text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
              "CN: ", CN, "<br>", "Call: ", Call, "<br>",
              "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#0072B2")) |> 
-                       add_trace(data = rects_2AMP, type = 'scatter', mode = 'markers',  x =  ~End, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5), color = I("#0072B2"), opacity = 0.6,
+                       plotly::add_trace(data = rects_2AMP, type = 'scatter', mode = 'markers',  x =  ~End, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5), color = I("#0072B2"), opacity = 0.6,
                          text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                            "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                            "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#0072B2")) |> 
-                       add_trace(data = rects_2AMP, type = 'scatter', mode = 'markers', x =  ~Start, y =  max(ceiling(max(subset_data_2()$Log2R)+1.5),5), color = I("#0072B2"), opacity = 0.6,
+                       plotly::add_trace(data = rects_2AMP, type = 'scatter', mode = 'markers', x =  ~Start, y =  max(ceiling(max(subset_data_2()$Log2R)+1.5),5), color = I("#0072B2"), opacity = 0.6,
                          text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                            "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                            "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#0072B2")) |> 
-                      add_trace(data = rects_2AMP, type = 'scatter', mode = 'markers', x =  ~Start, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5), color = I("#0072B2"), opacity = 0.6,
+                      plotly::add_trace(data = rects_2AMP, type = 'scatter', mode = 'markers', x =  ~Start, y =  min(floor(min(subset_data_1()$Log2R) - 0.5), -5), color = I("#0072B2"), opacity = 0.6,
                         text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                           "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                           "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#0072B2")) |> 
-                      add_trace(data = rects_2AMP,type = 'scatter', mode = 'markers',  x =  ~mid, y =  0, color = I("#0072B2"), opacity = 0.6,
+                      plotly::add_trace(data = rects_2AMP,type = 'scatter', mode = 'markers',  x =  ~mid, y =  0, color = I("#0072B2"), opacity = 0.6,
                         text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                           "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                           "ProbCall: ", round(ProbCall,2)),
@@ -1696,7 +1695,7 @@ if(!is.null(exons_annotations())){
          pl_2<- pl_2|> layout(
            yaxis = list(range = c(min(floor(min(subset_data_2()$Log2R) -0.5), -5),
                                     max(ceiling(max(subset_data_2()$Log2R)+1.5),5))))}
-       pl_2 <- pl_2 |>  partial_bundle()  |>  toWebGL()}
+       pl_2 <- pl_2 |>  plotly::partial_bundle()  |>  plotly::toWebGL()}
     
 
 # Plot for third individual -----------------------------------------------
@@ -1828,7 +1827,7 @@ if(!is.null(exons_annotations())){
        if(!is.null(subset_data_3_range())){
          
          pl_3 <- pl_3 |> 
-           add_trace(data = subset_data_3_range(), x = ~Position, y = ~Log2R,  color = ~Class, colors =pal_3(), type = 'scatter', mode = "markers",
+           plotly::add_trace(data = subset_data_3_range(), x = ~Position, y = ~Log2R,  color = ~Class, colors =pal_3(), type = 'scatter', mode = "markers",
              text = ~Text,
              hoverinfo = "text",
              marker =list(size = 4),showlegend = F)}
@@ -1869,62 +1868,62 @@ if(!is.null(exons_annotations())){
                                     max(ceiling(max(subset_data_3()$Log2R)+1.5),5))))}
 
        if (dim(rects_2DEL)[1] >0){
-         pl_3<- pl_3|> add_trace(data = rects_2DEL, type = 'scatter', mode = 'markers', x =  ~End, y =  max(ceiling(max(subset_data_3()$Log2R)+1.5),5),   color = I("#D55e00"), opacity = 0.6,
+         pl_3<- pl_3|> plotly::add_trace(data = rects_2DEL, type = 'scatter', mode = 'markers', x =  ~End, y =  max(ceiling(max(subset_data_3()$Log2R)+1.5),5),   color = I("#D55e00"), opacity = 0.6,
            text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
              "CN: ", CN, "<br>", "Call: ", Call, "<br>",
              "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#D55e00")) |> 
-                       add_trace(data = rects_2DEL, type = 'scatter', mode = 'markers', x =  ~Start, y =  max(ceiling(max(subset_data_3()$Log2R)+1.5),5),   color = I("#D55e00"), opacity = 0.6,
+                       plotly::add_trace(data = rects_2DEL, type = 'scatter', mode = 'markers', x =  ~Start, y =  max(ceiling(max(subset_data_3()$Log2R)+1.5),5),   color = I("#D55e00"), opacity = 0.6,
                          text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                            "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                            "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#D55e00")) |> 
-                      add_trace(data = rects_2DEL, type = 'scatter', mode = 'markers', x =  ~Start, y =  min(floor(min(subset_data_3()$Log2R) - 0.5), -5),   color = I("#D55e00"), opacity = 0.6,
+                      plotly::add_trace(data = rects_2DEL, type = 'scatter', mode = 'markers', x =  ~Start, y =  min(floor(min(subset_data_3()$Log2R) - 0.5), -5),   color = I("#D55e00"), opacity = 0.6,
                         text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                           "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                           "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#D55e00")) |> 
-                       add_trace(data = rects_2DEL, type = 'scatter', mode = 'markers', x =  ~End, y =  min(floor(min(subset_data_3()$Log2R) - 0.5), -5),   color = I("#D55e00"), opacity = 0.6,
+                       plotly::add_trace(data = rects_2DEL, type = 'scatter', mode = 'markers', x =  ~End, y =  min(floor(min(subset_data_3()$Log2R) - 0.5), -5),   color = I("#D55e00"), opacity = 0.6,
                          text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                            "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                            "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#D55e00")) |> 
-                       add_trace(data = rects_2DEL, type = 'scatter', mode = 'markers', x =  ~mid, y =  0,   color = I("#D55e00"), opacity = 0.6,
+                       plotly::add_trace(data = rects_2DEL, type = 'scatter', mode = 'markers', x =  ~mid, y =  0,   color = I("#D55e00"), opacity = 0.6,
                          text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                            "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                            "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#D55e00"))}
        if (dim(rects_DEL)[1] >0){
-         pl_3 <- pl_3|> add_trace(data = rects_DEL, type = 'scatter', mode = 'markers', x =  ~End, y =  max(ceiling(max(subset_data_3()$Log2R)+1.5),5),  color = I("#E69f00"), opacity = 0.6,
+         pl_3 <- pl_3|> plotly::add_trace(data = rects_DEL, type = 'scatter', mode = 'markers', x =  ~End, y =  max(ceiling(max(subset_data_3()$Log2R)+1.5),5),  color = I("#E69f00"), opacity = 0.6,
            text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
              "CN: ", CN, "<br>", "Call: ", Call, "<br>",
              "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#E69f00")) |> 
-                      add_trace(data = rects_DEL,  type = 'scatter', mode = 'markers', x =  ~End, y =  min(floor(min(subset_data_3()$Log2R) - 0.5), -5),  color = I("#E69f00"), opacity = 0.6,
+                      plotly::add_trace(data = rects_DEL,  type = 'scatter', mode = 'markers', x =  ~End, y =  min(floor(min(subset_data_3()$Log2R) - 0.5), -5),  color = I("#E69f00"), opacity = 0.6,
                         text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                           "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                           "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#E69f00")) |> 
-                       add_trace(data = rects_DEL, type = 'scatter', mode = 'markers', x =  ~Start, y =  min(floor(min(subset_data_3()$Log2R) - 0.5), -5),  color = I("#E69f00"), opacity = 0.6,
+                       plotly::add_trace(data = rects_DEL, type = 'scatter', mode = 'markers', x =  ~Start, y =  min(floor(min(subset_data_3()$Log2R) - 0.5), -5),  color = I("#E69f00"), opacity = 0.6,
                          text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                            "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                            "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#E69f00")) |> 
-                       add_trace(data = rects_DEL, type = 'scatter', mode = 'markers', x =  ~Start, y =  max(ceiling(max(subset_data_3()$Log2R)+1.5),5),  color = I("#E69f00"), opacity = 0.6,
+                       plotly::add_trace(data = rects_DEL, type = 'scatter', mode = 'markers', x =  ~Start, y =  max(ceiling(max(subset_data_3()$Log2R)+1.5),5),  color = I("#E69f00"), opacity = 0.6,
                          text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                            "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                            "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#E69f00")) |> 
-                       add_trace(data = rects_DEL, type = 'scatter', mode = 'markers', x =  ~mid, y = 0,  color = I("#E69f00"), opacity = 0.6,
+                       plotly::add_trace(data = rects_DEL, type = 'scatter', mode = 'markers', x =  ~mid, y = 0,  color = I("#E69f00"), opacity = 0.6,
                          text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                            "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                            "ProbCall: ", round(ProbCall,2)),
@@ -1932,31 +1931,31 @@ if(!is.null(exons_annotations())){
                                  hoverlabel = list(bgcolor = "#E69f00"))}
 
        if (dim(rects_AMP)[1] >0){
-         pl_3 <- pl_3|> add_trace(data = rects_AMP, type = 'scatter', mode = 'markers',  x =  ~End, y =  max(ceiling(max(subset_data_3()$Log2R)+1.5),5),  color = I("#56B4E9"), opacity = 0.6,
+         pl_3 <- pl_3|> plotly::add_trace(data = rects_AMP, type = 'scatter', mode = 'markers',  x =  ~End, y =  max(ceiling(max(subset_data_3()$Log2R)+1.5),5),  color = I("#56B4E9"), opacity = 0.6,
            text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
              "CN: ", CN, "<br>", "Call: ", Call, "<br>",
              "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#56B4E9")) |> 
-                    add_trace(data = rects_AMP, type = 'scatter', mode = 'markers', x =  ~End, y =  min(floor(min(subset_data_3()$Log2R) - 0.5), -5),  color = I("#56B4E9"), opacity = 0.6,
+                    plotly::add_trace(data = rects_AMP, type = 'scatter', mode = 'markers', x =  ~End, y =  min(floor(min(subset_data_3()$Log2R) - 0.5), -5),  color = I("#56B4E9"), opacity = 0.6,
                       text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                         "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                         "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#56B4E9")) |> 
-                     add_trace(data = rects_AMP, type = 'scatter', mode = 'markers', x =  ~Start, y =  min(floor(min(subset_data_3()$Log2R) - 0.5), -5),  color = I("#56B4E9"), opacity = 0.6,
+                     plotly::add_trace(data = rects_AMP, type = 'scatter', mode = 'markers', x =  ~Start, y =  min(floor(min(subset_data_3()$Log2R) - 0.5), -5),  color = I("#56B4E9"), opacity = 0.6,
                        text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                          "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                          "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#56B4E9"))|>
-                  add_trace(data = rects_AMP, type = 'scatter', mode = 'markers', x =  ~Start, y =  max(ceiling(max(subset_data_3()$Log2R)+1.5),5),  color = I("#56B4E9"), opacity = 0.6,
+                  plotly::add_trace(data = rects_AMP, type = 'scatter', mode = 'markers', x =  ~Start, y =  max(ceiling(max(subset_data_3()$Log2R)+1.5),5),  color = I("#56B4E9"), opacity = 0.6,
                     text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                       "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                       "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#56B4E9")) |> 
-                   add_trace(data = rects_AMP, type = 'scatter', mode = 'markers',  x =  ~mid, y = 0,  color = I("#56B4E9"), opacity = 0.6,
+                   plotly::add_trace(data = rects_AMP, type = 'scatter', mode = 'markers',  x =  ~mid, y = 0,  color = I("#56B4E9"), opacity = 0.6,
                      text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                        "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                        "ProbCall: ", round(ProbCall,2)),
@@ -1964,31 +1963,31 @@ if(!is.null(exons_annotations())){
                                  hoverlabel = list(bgcolor = "#56B4E9"))}
        
        if (dim(rects_2AMP)[1] >0){
-         pl_3<- pl_3|> add_trace(data = rects_2AMP, type = 'scatter', mode = 'markers',  x =  ~End, y =  max(ceiling(max(subset_data_3()$Log2R)+1.5),5), color = I("#0072B2"), opacity = 0.6,
+         pl_3<- pl_3|> plotly::add_trace(data = rects_2AMP, type = 'scatter', mode = 'markers',  x =  ~End, y =  max(ceiling(max(subset_data_3()$Log2R)+1.5),5), color = I("#0072B2"), opacity = 0.6,
            text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
              "CN: ", CN, "<br>", "Call: ", Call, "<br>",
              "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#0072B2")) |> 
-                    add_trace(data = rects_2AMP,  type = 'scatter', mode = 'markers', x =  ~End, y =  min(floor(min(subset_data_3()$Log2R) - 0.5), -5), color = I("#0072B2"), opacity = 0.6,
+                    plotly::add_trace(data = rects_2AMP,  type = 'scatter', mode = 'markers', x =  ~End, y =  min(floor(min(subset_data_3()$Log2R) - 0.5), -5), color = I("#0072B2"), opacity = 0.6,
                       text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                         "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                         "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#0072B2")) |> 
-                    add_trace(data = rects_2AMP, type = 'scatter', mode = 'markers',  x =  ~Start, y =  max(ceiling(max(subset_data_3()$Log2R)+1.5),5), color = I("#0072B2"), opacity = 0.6,
+                    plotly::add_trace(data = rects_2AMP, type = 'scatter', mode = 'markers',  x =  ~Start, y =  max(ceiling(max(subset_data_3()$Log2R)+1.5),5), color = I("#0072B2"), opacity = 0.6,
                       text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                         "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                         "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#0072B2")) |> 
-                    add_trace(data = rects_2AMP, type = 'scatter', mode = 'markers',  x =  ~Start, y =  min(floor(min(subset_data_3()$Log2R) - 0.5), -5), color = I("#0072B2"), opacity = 0.6,
+                    plotly::add_trace(data = rects_2AMP, type = 'scatter', mode = 'markers',  x =  ~Start, y =  min(floor(min(subset_data_3()$Log2R) - 0.5), -5), color = I("#0072B2"), opacity = 0.6,
                       text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                         "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                         "ProbCall: ", round(ProbCall,2)),
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#0072B2")) |> 
-                     add_trace(data = rects_2AMP, type = 'scatter', mode = 'markers', x =  ~mid, y =  0, color = I("#0072B2"), opacity = 0.6,
+                     plotly::add_trace(data = rects_2AMP, type = 'scatter', mode = 'markers', x =  ~mid, y =  0, color = I("#0072B2"), opacity = 0.6,
                        text = ~paste(" Start: ", Start, "<br>", "End: ", End, "<br>", "Mutation: ", Mutation,"<br>",
                          "CN: ", CN, "<br>", "Call: ", Call, "<br>",
                          "ProbCall: ", round(ProbCall,2)),
@@ -2005,7 +2004,7 @@ if(!is.null(exons_annotations())){
           yaxis = list(range =list(min(floor(min(subset_data_3()$Log2R) -0.5),5),
                                    max(ceiling(max(subset_data_3()$Log2R)+1.5),5))))}
        
-       pl_3 <- pl_3 |>  partial_bundle()  |>  toWebGL()}
+       pl_3 <- pl_3 |>  plotly::partial_bundle()  |>  plotly::toWebGL()}
       
 
 
@@ -2019,49 +2018,49 @@ if(!is.null(exons_annotations())){
     else if (is.null(input$FastCall_Results_3) | z$val == 1){
       if(input$GenomeBrowser){
         if(input$ShareAxes){
-          plt <- subplot(pl, pl_2, nrows =2, heights = c(3/4,1/4), shareX = TRUE, titleY  = TRUE)}
-        else {plt <- subplot(pl, pl_2, nrows =2, heights = c(3/4,1/4),titleY  = TRUE)}
+          plt <- plotly::subplot(pl, pl_2, nrows =2, heights = c(3/4,1/4), shareX = TRUE, titleY  = TRUE)}
+        else {plt <- plotly::subplot(pl, pl_2, nrows =2, heights = c(3/4,1/4),titleY  = TRUE)}
       }
       else{
         if(input$ShareAxes){
-          plt <- subplot(pl, pl_2, nrows =2, heights = c(2/3,1/3), shareX = TRUE, titleY  = TRUE)}
-        else {plt <- subplot(pl, pl_2, nrows =2, heights = c(2/3,1/3),titleY  = TRUE)}
+          plt <- plotly::subplot(pl, pl_2, nrows =2, heights = c(2/3,1/3), shareX = TRUE, titleY  = TRUE)}
+        else {plt <- plotly::subplot(pl, pl_2, nrows =2, heights = c(2/3,1/3),titleY  = TRUE)}
       }
        }
       
      else {
        if(input$GenomeBrowser){
           if(input$ShareAxes){
-             plt <- subplot(pl, pl_2, pl_3,
+             plt <- plotly::subplot(pl, pl_2, pl_3,
                           nrows =3, heights = c(3/5,1/5,1/5), shareX = TRUE,  titleY  = TRUE)}
-          else {plt <- subplot(pl, pl_2, pl_3,nrows =3,  heights = c(3/5,1/5, 1/5),  titleY  = TRUE)}
+          else {plt <- plotly::subplot(pl, pl_2, pl_3,nrows =3,  heights = c(3/5,1/5, 1/5),  titleY  = TRUE)}
        }
        else{
          if(input$ShareAxes){
-           plt <- subplot(pl, pl_2, pl_3,
+           plt <- plotly::subplot(pl, pl_2, pl_3,
                           nrows =3, heights = c(2/4,1/4,1/4), shareX = TRUE,  titleY  = TRUE)}
-         else {plt <- subplot(pl, pl_2, pl_3,nrows =3,  heights = c(2/4,1/4, 1/4),  titleY  = TRUE)}
+         else {plt <- plotly::subplot(pl, pl_2, pl_3,nrows =3,  heights = c(2/4,1/4, 1/4),  titleY  = TRUE)}
          
        }}
-    plt <- plt |> partial_bundle()  |>  toWebGL()
+    plt <- plt |> plotly::partial_bundle()  |>  plotly::toWebGL()
     
       session_store$plt <- plt
       session_store$plt
 
-   })  %>% bindCache(input$chr, input$Prob, input$Type, input$Freq, input$slider, input$slider_Annotations, input$GenomeBrowser,
+   })  |>  shiny::bindCache(input$chr, input$Prob, input$Type, input$Freq, input$slider, input$slider_Annotations, input$GenomeBrowser,
                       input$HSLM_1, input$FastCall_Results_1,input$True_Set, input$HSLM_2, input$FastCall_Results_2, 
                       input$HSLM_3, input$FastCall_Results_3, input$AnnotSV, input$DGV_Merge,input$ShareAxes,
                      input$DGV_Gold, input$GnomAD_Genome, input$GnomAD_Exome, input$Genome, input$Set_y_axis, rv$download_flag, z$val, x$val 
                      )
     
     
-    output$downloadplot <- downloadHandler(
+    output$downloadplot <- shiny::downloadHandler(
       filename = function() {
         paste(Sys.Date(), " ", input$chr," Coordinates", " ", input$slider[1],"-", input$slider[2],  ".html", sep = "")
       },
       content = function(file) {
         # export plotly html widget as a temp file to download.
-        saveWidget(as_widget(isolate(session_store$plt)), file, selfcontained = TRUE)
+        htmlwidgets::saveWidget(plotly::as_widget(ishiny::isolate(session_store$plt)), file, selfcontained = TRUE)
         rv$download_flag <- rv$download_flag + 1
       }
     )
