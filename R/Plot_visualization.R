@@ -1,54 +1,57 @@
-library(shiny)
-library(dplyr)
-library(stringr)
-library(plotly)
-library(htmlwidgets)
-library(bslib)
-library(arrow)
 
-
-# Arguments ---------------------------------------------------------------
-
-
-
-options(shiny.maxRequestSize=50*1024^2) #max dim for input files 
-
-
-# Specify the application port
-options(shiny.host = "0.0.0.0")
-options(shiny.port = 3838)
-addResourcePath(prefix = 'www', directoryPath = 'data/www')
-shinyOptions(cache = cachem::cache_mem(max_size = 500e6))
-
-
-
-# Read variants annotations data ---------------------------------------------------
-
-Annotations_37 <- open_dataset("data/37") |> collect()
-Annotations_38 <- open_dataset("data/38") |> collect()
-
-
-
-# Read genes annotation data ----------------------------------------------
-
-genes_annotation_38 <-readRDS("data/genes_annotation_38.rds")
-genes_annotation_37 <-readRDS("data/genes_annotation_37.rds")
-
-
-# Read exons annotations --------------------------------------------------
-
-exons_annotation_37 <- readRDS("data/Exons_37.rds")
-exons_annotation_38 <- readRDS("data/Exons_38.rds")
-
-# Read chromosome coordinates --------------------------------------------
-
-hg37_Chromosome_coordinates <- readRDS("data/hg37_Coordinates.rds")
-hg38_Chromosome_coordinates <- readRDS("data/hg38_Coordinates.rds")
-
-
-# ui ----------------------------------------------------------------------
-
-myApp <- function(...) {
+Plot_Visualization <- function(...) {
+  
+  
+  library(shiny)
+  library(dplyr)
+  library(stringr)
+  library(plotly)
+  library(htmlwidgets)
+  library(bslib)
+  library(arrow)
+  
+  
+  # Arguments ---------------------------------------------------------------
+  
+  
+  
+  
+  # Specify the application port
+  options(shiny.host = "0.0.0.0")
+  options(shiny.port = 6868)
+  addResourcePath(prefix = 'www', directoryPath = 'data/www')
+  shinyOptions(cache = cachem::cache_mem(max_size = 500e6))
+  options(warn = -1)
+  
+  
+  
+  # Read variants annotations data ---------------------------------------------------
+  
+  Annotations_37 <- open_dataset("data/37") |> collect()
+  Annotations_38 <- open_dataset("data/38") |> collect()
+  
+  
+  
+  # Read genes annotation data ----------------------------------------------
+  
+  genes_annotation_38 <-readRDS("data/genes_annotation_38.rds")
+  genes_annotation_37 <-readRDS("data/genes_annotation_37.rds")
+  
+  
+  # Read exons annotations --------------------------------------------------
+  
+  exons_annotation_37 <- readRDS("data/Exons_37.rds")
+  exons_annotation_38 <- readRDS("data/Exons_38.rds")
+  
+  # Read chromosome coordinates --------------------------------------------
+  
+  hg37_Chromosome_coordinates <- readRDS("data/hg37_Coordinates.rds")
+  hg38_Chromosome_coordinates <- readRDS("data/hg38_Coordinates.rds")
+  
+  
+  # ui ----------------------------------------------------------------------  
+  
+  
 ui  <- page_sidebar(
   theme = bs_theme(
   bootswatch = "cosmo"),
@@ -2065,7 +2068,5 @@ if(!is.null(exons_annotations())){
   
 } 
 
-
-shinyApp(ui, server)
-
+  shinyApp(ui, server)
 }
