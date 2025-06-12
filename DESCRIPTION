@@ -17,3 +17,5 @@ Imports:
     plotly,
     shiny,
     stringr
+URL: https://github.com/Francesco85P/AppPackage
+BugReports: https://github.com/Francesco85P/AppPackage/issues
