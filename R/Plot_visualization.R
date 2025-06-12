@@ -1,3 +1,11 @@
+#' Plotting CNVs detection results
+#'
+#' @param ... No input is needed to run the Shiny App
+#'
+#' @returns A shiny App
+#' @export
+#'
+#' @examples Plot_Visualization()
 Plot_Visualization <- function(...) {
   
   
@@ -18,7 +26,7 @@ Plot_Visualization <- function(...) {
   # Specify the application port
   options(shiny.host = "0.0.0.0")
   options(shiny.port = 6868)
-  addResourcePath(prefix = 'www', directoryPath = 'data/www')
+  addResourcePath(prefix = 'www', directoryPath = "data/www")
   shinyOptions(cache = cachem::cache_mem(max_size = 500e6))
   options(warn = -1)
   
@@ -26,8 +34,8 @@ Plot_Visualization <- function(...) {
   
   # Read variants annotations data ---------------------------------------------------
   
-  Annotations_37 <- open_dataset("data/37") |> collect()
-  Annotations_38 <- open_dataset("data/38") |> collect()
+  Annotations_37 <- arrow::open_dataset("data/37") |> collect()
+  Annotations_38 <- arrow::open_dataset("data/38") |> collect()
   
   
   
@@ -52,54 +60,54 @@ Plot_Visualization <- function(...) {
   
   
 ui  <- page_sidebar(
-  theme = bs_theme(
+  theme = bslib::bs_theme(
   bootswatch = "cosmo"),
 
  # Application title
   title ="ReViewCNV",
   #tags$style(".recalculating { opacity: inherit !important; }"),
     sidebar = sidebar(width = "35%",
-      selectInput("Genome", "Select the Genome version", selected = NULL,
+      shiny::selectInput("Genome", "Select the Genome version", selected = NULL,
         choices = c("","GRCh37", "GRCh38")),
       shiny::fileInput("FastCall_Results_1", "Load the CNV calls file"),
       shiny::fileInput("HSLM_1", "If available load the HSLM/TR level CN estimation file"),
-      checkboxInput("GenomeBrowser", "Show genes annotations", value = FALSE, width = NULL),
-      checkboxInput("ShareAxes", "Share x axis", value = TRUE, width = NULL),
-      checkboxInput("Set_y_axis", "Set the same Log2R range", value = FALSE, width = NULL),
-      uiOutput("Button_1"), 
-      uiOutput("Second_Individual"),
-      uiOutput("Button_2"), 
-      uiOutput("Third_Individual"),
-        selectInput("chr", "Select the Chr", selected = "chr1",
+      shiny::checkboxInput("GenomeBrowser", "Show genes annotations", value = FALSE, width = NULL),
+      shiny::checkboxInput("ShareAxes", "Share x axis", value = TRUE, width = NULL),
+      shiny::checkboxInput("Set_y_axis", "Set the same Log2R range", value = FALSE, width = NULL),
+      shiny::uiOutput("Button_1"), 
+      shiny::uiOutput("Second_Individual"),
+      shiny::uiOutput("Button_2"), 
+      shiny::uiOutput("Third_Individual"),
+        shiny::selectInput("chr", "Select the Chr", selected = "chr1",
           choices = c("chr1", "chr2", "chr3", "chr4", "chr5", "chr6",
             "chr7", "chr8", "chr9", "chr10", "chr11",
            "chr12", "chr13", "chr14", "chr15", "chr16",
            "chr17", "chr18", "chr19", "chr20", "chr21",
             "chr22", "chrX")),
-        selectInput("Prob", "Select Calls", selected = "All",
+        shiny::selectInput("Prob", "Select Calls", selected = "All",
           choices = c("All" = "-1", "Prob Call \u2265  0.5" = "0.5", "Prob Call \u2265  0.6" = "0.6", 
             "Prob Call \u2265  0.7" = "0.7", "Prob Call \u2265  0.8" = "0.8",
             "Prob Call \u2265  0.9" = "0.9")),
         h4("Choose CNVs datasets"),
-        checkboxInput("AnnotSV", "AnnotSV", value = TRUE),
-        checkboxInput("DGV_Merge", "DGV_Merge", value = FALSE),
-        checkboxInput("DGV_Gold", "DGV_Gold", value = FALSE),
-        checkboxInput("GnomAD_Genome", "GnomAD_Genome", value = FALSE),
-        checkboxInput("GnomAD_Exome", "GnomAD_Exome (only GRCh38)", value = FALSE),
-        selectInput("Type", "Select CNVs type", selected = "All",
+        shiny::checkboxInput("AnnotSV", "AnnotSV", value = TRUE),
+        shiny::checkboxInput("DGV_Merge", "DGV_Merge", value = FALSE),
+        shiny::checkboxInput("DGV_Gold", "DGV_Gold", value = FALSE),
+        shiny::checkboxInput("GnomAD_Genome", "GnomAD_Genome", value = FALSE),
+        shiny::checkboxInput("GnomAD_Exome", "GnomAD_Exome (only GRCh38)", value = FALSE),
+        shiny::selectInput("Type", "Select CNVs type", selected = "All",
                   choices = c("All" = ".*","Gain" = "Gain", 
                               "Loss" = "Loss")),
-        selectInput("Freq", "Select CNVs frequency", selected = "All",
+        shiny::selectInput("Freq", "Select CNVs frequency", selected = "All",
             choices = c("All" = 0, "Freq \u003E  0.01" = 0.01, 
               "Freq \u003E  0.02" = 0.02,"Freq \u003E  0.05" = 0.05, 
               "Freq \u003E  0.1" = 0.1, "Freq \u003E  0.2" = 0.2,
               "Freq \u003E  0.3" = 0.3)),
-        uiOutput("limits"),
-        uiOutput("Annotations_limits"),
+        shiny::uiOutput("limits"),
+        shiny::uiOutput("Annotations_limits"),
         HTML('<img src = "www/Logo.png" width = "60%" hight = "auto" >')
         ),
         plotlyOutput("zoomPlot"),
-        uiOutput("Download")
+        shiny::uiOutput("Download")
         )
 
 
@@ -974,7 +982,7 @@ if(!(is.null(input$FastCall_Results_1) | is.null(input$slider_Annotations[1])|
     rect <- append(rect, rect_CNV_Gain)
   }
  fig <- plot_ly() |> 
-   layout(shapes = rect, xaxis = list(title = "Chromosome coordinates",
+   plotly::layout(shapes = rect, xaxis = list(title = "Chromosome coordinates",
        range = c(min=input$slider[1], 
        max=input$slider[2])),
           yaxis = list(title = "Polymorphisms",range =list((input$slider_Annotations[1]),
@@ -996,7 +1004,7 @@ if(!(is.null(input$FastCall_Results_1) | is.null(input$slider_Annotations[1])|
   }
   else{
     fig <- plot_ly(type = 'scatter', mode = "markers") |> 
-      layout( yaxis = list(range =list(0, 20))) |> 
+      plotly::layout( yaxis = list(range =list(0, 20))) |> 
       plotly::partial_bundle()  |>  plotly::toWebGL()
   }
 }
@@ -1012,7 +1020,7 @@ if(input$GenomeBrowser){
           "<br>","Start:", Start, "<br>", "End:", End),
           hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
           hoverlabel = list(bgcolor = "#008000" ,align = "left")) |> 
-          layout(shapes = shapes(), xaxis = list(title = "Chromosome coordinates",
+          plotly::layout(shapes = shapes(), xaxis = list(title = "Chromosome coordinates",
           range = c(min=input$slider[1], 
           max=input$slider[2])),
           yaxis = list( showline=  F, tickvals = c(1, 2), title = "Genes",
@@ -1189,7 +1197,7 @@ if(!is.null(exons_annotations())){
      name = "Loss CNVs from selected databases", 
      color= I("orange")
        ) |> 
-    layout(shapes = rect, legend=list(title=list(text='Window')),
+    plotly::layout(shapes = rect, legend=list(title=list(text='Window')),
                       xaxis = list(title = "Chromosome coordinates", range = c(min=input$slider[1], 
           max=input$slider[2])))
       
@@ -1197,12 +1205,12 @@ if(!is.null(exons_annotations())){
       
     if(!is.null(subset_data_1_range())){
       if(!is.null(subset_data_1_range()$Mappability)){
-        pl_1 <-pl_1 |>  layout(yaxis = list(title = 'NRC poolNorm'))}
+        pl_1 <-pl_1 |>  plotly::layout(yaxis = list(title = 'NRC poolNorm'))}
       else {
-        pl_1 <-pl_1 |>  layout(yaxis = list(title = 'Log2 Ratio'))}
+        pl_1 <-pl_1 |>  plotly::layout(yaxis = list(title = 'Log2 Ratio'))}
     }
       else {
-        pl_1 <-pl_1 |>  layout(yaxis = list(
+        pl_1 <-pl_1 |>  plotly::layout(yaxis = list(
           title = "Identified CNVs",
           zeroline = FALSE,
           showline = FALSE,
@@ -1343,24 +1351,24 @@ if(!is.null(exons_annotations())){
        
        if(input$Set_y_axis) {
          if (is.null(input$HSLM_2) | is.null(input$FastCall_Results_2)){
-           pl_1 <- pl_1|> layout(
+           pl_1 <- pl_1|> plotly::layout(
              yaxis = list(range =c(min(floor(min(subset_data_1()$Log2R) -0.5),-5)),
                max(ceiling(max(subset_data_1()$Log2R)+0.5), 5)))}
          else if (is.null(input$HSLM_3) | is.null(input$FastCall_Results_3)){
-           pl_1<- pl_1|> layout(
+           pl_1<- pl_1|> plotly::layout(
              yaxis = list(range = c(
                min=min(floor(min(min(subset_data_1()$Log2R) -0.5, min(subset_data_2()$Log2R) -0.5)),-5), 
                max=max(ceiling(max(max(subset_data_1()$Log2R) + 0.5, max(subset_data_2()$Log2R) + 0.5)),5)
              )))}
          else {
-           pl_1 <- pl_1|> layout(
+           pl_1 <- pl_1|> plotly::layout(
              yaxis = list(range = c(
                min=min(floor(min(min(subset_data_1()$Log2R) -0.5, min(subset_data_2()$Log2R) -0.5, min(subset_data_3()$Log2R) -0.5 )),-5),
                max= max(ceiling(max(max(subset_data_1()$Log2R) + 0.5, max(subset_data_2()$Log2R) + 0.5, max(subset_data_3()$Log2R) + 0.5)),5)))
            )}
        }
        else{
-         pl_1<- pl_1|> layout(
+         pl_1<- pl_1|> plotly::layout(
            yaxis = list(range =c(min(floor(min(subset_data_1()$Log2R) -0.5),-5)),
                                     max(ceiling(max(subset_data_1()$Log2R)+0.5), 5)))}
        
@@ -1533,17 +1541,17 @@ if(!is.null(exons_annotations())){
          
          
          
-       pl_2 <- pl_2|> layout(shapes = rect, xaxis = list(title = "Chromosome coordinates", range = c(min=input$slider[1], 
+       pl_2 <- pl_2|> plotly::layout(shapes = rect, xaxis = list(title = "Chromosome coordinates", range = c(min=input$slider[1], 
             max=input$slider[2])))
        
        if(!is.null(subset_data_2_range())){
          if(!is.null(subset_data_2_range()$Mappability)){
-           pl_2 <-pl_2 |>  layout(yaxis = list(title = 'NRC poolNorm'))}
+           pl_2 <-pl_2 |>  plotly::layout(yaxis = list(title = 'NRC poolNorm'))}
          else {
-           pl_2 <-pl_2 |>  layout(yaxis = list(title = 'Log2 Ratio'))}
+           pl_2 <-pl_2 |>  plotly::layout(yaxis = list(title = 'Log2 Ratio'))}
        }
        else {
-         pl_2 <-pl_2 |>  layout(yaxis = list(
+         pl_2 <-pl_2 |>  plotly::layout(yaxis = list(
            title = "Identified CNVs",
            zeroline = FALSE,
            showline = FALSE,
@@ -1679,20 +1687,20 @@ if(!is.null(exons_annotations())){
                                  hoverlabel = list(bgcolor = "#0072B2"))}
        if(input$Set_y_axis){
          if (is.null(input$HSLM_3) | is.null(input$FastCall_Results_3)){
-           pl_2 <- pl_2|> layout(
+           pl_2 <- pl_2|> plotly::layout(
              yaxis = list(range = c(
                min=min(floor(min(min(subset_data_1()$Log2R) -0.5, min(subset_data_2()$Log2R) -0.5)),-5), 
                max=max(ceiling(max(max(subset_data_1()$Log2R) + 0.5, max(subset_data_2()$Log2R) + 0.5)),5)
              )))}
          else {
-           pl_2 <- pl_2|> layout(
+           pl_2 <- pl_2|> plotly::layout(
              yaxis = list(range = c(
                min=min(floor(min(min(subset_data_1()$Log2R) -0.5, min(subset_data_2()$Log2R) -0.5, min(subset_data_3()$Log2R) -0.5 )),-5),
                max= max(ceiling(max(max(subset_data_1()$Log2R) + 0.5, max(subset_data_2()$Log2R) + 0.5, max(subset_data_3()$Log2R) + 0.5)),5)))
            )}
        }
        else{
-         pl_2<- pl_2|> layout(
+         pl_2<- pl_2|> plotly::layout(
            yaxis = list(range = c(min(floor(min(subset_data_2()$Log2R) -0.5), -5),
                                     max(ceiling(max(subset_data_2()$Log2R)+1.5),5))))}
        pl_2 <- pl_2 |>  plotly::partial_bundle()  |>  plotly::toWebGL()}
@@ -1834,18 +1842,18 @@ if(!is.null(exons_annotations())){
        
        
         
-        pl_3 <- pl_3 |> layout(shapes = rect,  xaxis = list(title = "Chromosome coordinates", range = c(min=input$slider[1], 
+        pl_3 <- pl_3 |> plotly::layout(shapes = rect,  xaxis = list(title = "Chromosome coordinates", range = c(min=input$slider[1], 
           max=input$slider[2])))
         
         
         if(!is.null(subset_data_3_range())){
           if(!is.null(subset_data_3_range()$Mappability)){
-            pl_3 <-pl_3 |>  layout(yaxis = list(title = 'NRC poolNorm'))}
+            pl_3 <-pl_3 |>  plotly::layout(yaxis = list(title = 'NRC poolNorm'))}
           else {
-            pl_3 <-pl_3 |>  layout(yaxis = list(title = 'Log2 Ratio'))}
+            pl_3 <-pl_3 |>  plotly::layout(yaxis = list(title = 'Log2 Ratio'))}
         }
         else {
-          pl_3 <-pl_3 |>  layout(yaxis = list(
+          pl_3 <-pl_3 |>  plotly::layout(yaxis = list(
             title = "Identified CNVs",
             zeroline = FALSE,
             showline = FALSE,
@@ -1857,13 +1865,13 @@ if(!is.null(exons_annotations())){
   
   
        if(input$Set_y_axis) {
-             pl_3 <- pl_3|> layout(
+             pl_3 <- pl_3|> plotly::layout(
                yaxis = list(range = c(
                  min=floor(min(min(subset_data_1()$Log2R) -0.5, min(subset_data_2()$Log2R) -0.5, min(subset_data_3()$Log2R) -0.5 )), 
                  max=ceiling(max(max(subset_data_1()$Log2R) + 0.5, max(subset_data_2()$Log2R) + 0.5, max(subset_data_3()$Log2R) + 0.5))))
              )}
        else{
-         pl_3 <- pl_3|> layout(
+         pl_3 <- pl_3|> plotly::layout(
            yaxis = list(range = c(floor(min(subset_data_3()$Log2R) -0.5),
                                     max(ceiling(max(subset_data_3()$Log2R)+1.5),5))))}
 
@@ -1994,13 +2002,13 @@ if(!is.null(exons_annotations())){
                                  hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
                                  hoverlabel = list(bgcolor = "#0072B2"))}
         if(input$Set_y_axis) {
-          pl_3 <- pl_3|> layout(
+          pl_3 <- pl_3|> plotly::layout(
           yaxis = list(
             min=min(floor(min(min(subset_data_1()$Log2R) -0.5, min(subset_data_2()$Log2R) -0.5, min(subset_data_3()$Log2R) -0.5 )),-5),
             max= max(ceiling(max(max(subset_data_1()$Log2R) + 0.5, max(subset_data_2()$Log2R) + 0.5, max(subset_data_3()$Log2R) + 0.5)),5))
         )}
         else{
-          pl_3 <- pl_3|> layout(
+          pl_3 <- pl_3|> plotly::layout(
           yaxis = list(range =list(min(floor(min(subset_data_3()$Log2R) -0.5),5),
                                    max(ceiling(max(subset_data_3()$Log2R)+1.5),5))))}
        
