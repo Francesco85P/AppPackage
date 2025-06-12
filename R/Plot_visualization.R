@@ -1,15 +1,16 @@
-#' Plotting CNVs detection results
+library(shiny)
+#' Plot CNVs
 #'
-#' @param ... No input is needed to run the Shiny App
+#' @param No params
 #'
 #' @returns A shiny App
 #' @export
 #'
-#' @examples Plot_Visualization()
+#' @examples Plot_Visualization ()
 Plot_Visualization <- function(...) {
   
   
-  library(shiny)
+
   library(dplyr)
   library(stringr)
   library(plotly)
@@ -24,6 +25,7 @@ Plot_Visualization <- function(...) {
   
   
   # Specify the application port
+  options(shiny.maxRequestSize=50*1024^2) #max dim for input files 
   options(shiny.host = "0.0.0.0")
   options(shiny.port = 6868)
   addResourcePath(prefix = 'www', directoryPath = "data/www")
@@ -67,47 +69,47 @@ ui  <- page_sidebar(
   title ="ReViewCNV",
   #tags$style(".recalculating { opacity: inherit !important; }"),
     sidebar = sidebar(width = "35%",
-      shiny::selectInput("Genome", "Select the Genome version", selected = NULL,
+      selectInput("Genome", "Select the Genome version", selected = NULL,
         choices = c("","GRCh37", "GRCh38")),
-      shiny::fileInput("FastCall_Results_1", "Load the CNV calls file"),
-      shiny::fileInput("HSLM_1", "If available load the HSLM/TR level CN estimation file"),
-      shiny::checkboxInput("GenomeBrowser", "Show genes annotations", value = FALSE, width = NULL),
-      shiny::checkboxInput("ShareAxes", "Share x axis", value = TRUE, width = NULL),
-      shiny::checkboxInput("Set_y_axis", "Set the same Log2R range", value = FALSE, width = NULL),
-      shiny::uiOutput("Button_1"), 
-      shiny::uiOutput("Second_Individual"),
-      shiny::uiOutput("Button_2"), 
-      shiny::uiOutput("Third_Individual"),
-        shiny::selectInput("chr", "Select the Chr", selected = "chr1",
+      fileInput("FastCall_Results_1", "Load the CNV calls file"),
+      fileInput("HSLM_1", "If available load the HSLM/TR level CN estimation file"),
+      checkboxInput("GenomeBrowser", "Show genes annotations", value = FALSE, width = NULL),
+      checkboxInput("ShareAxes", "Share x axis", value = TRUE, width = NULL),
+      checkboxInput("Set_y_axis", "Set the same Log2R range", value = FALSE, width = NULL),
+      uiOutput("Button_1"), 
+      uiOutput("Second_Individual"),
+      uiOutput("Button_2"), 
+      uiOutput("Third_Individual"),
+        selectInput("chr", "Select the Chr", selected = "chr1",
           choices = c("chr1", "chr2", "chr3", "chr4", "chr5", "chr6",
             "chr7", "chr8", "chr9", "chr10", "chr11",
            "chr12", "chr13", "chr14", "chr15", "chr16",
            "chr17", "chr18", "chr19", "chr20", "chr21",
             "chr22", "chrX")),
-        shiny::selectInput("Prob", "Select Calls", selected = "All",
+        selectInput("Prob", "Select Calls", selected = "All",
           choices = c("All" = "-1", "Prob Call \u2265  0.5" = "0.5", "Prob Call \u2265  0.6" = "0.6", 
             "Prob Call \u2265  0.7" = "0.7", "Prob Call \u2265  0.8" = "0.8",
             "Prob Call \u2265  0.9" = "0.9")),
         h4("Choose CNVs datasets"),
-        shiny::checkboxInput("AnnotSV", "AnnotSV", value = TRUE),
-        shiny::checkboxInput("DGV_Merge", "DGV_Merge", value = FALSE),
-        shiny::checkboxInput("DGV_Gold", "DGV_Gold", value = FALSE),
-        shiny::checkboxInput("GnomAD_Genome", "GnomAD_Genome", value = FALSE),
-        shiny::checkboxInput("GnomAD_Exome", "GnomAD_Exome (only GRCh38)", value = FALSE),
-        shiny::selectInput("Type", "Select CNVs type", selected = "All",
+        checkboxInput("AnnotSV", "AnnotSV", value = TRUE),
+        checkboxInput("DGV_Merge", "DGV_Merge", value = FALSE),
+        checkboxInput("DGV_Gold", "DGV_Gold", value = FALSE),
+        checkboxInput("GnomAD_Genome", "GnomAD_Genome", value = FALSE),
+        checkboxInput("GnomAD_Exome", "GnomAD_Exome (only GRCh38)", value = FALSE),
+        selectInput("Type", "Select CNVs type", selected = "All",
                   choices = c("All" = ".*","Gain" = "Gain", 
                               "Loss" = "Loss")),
-        shiny::selectInput("Freq", "Select CNVs frequency", selected = "All",
+        selectInput("Freq", "Select CNVs frequency", selected = "All",
             choices = c("All" = 0, "Freq \u003E  0.01" = 0.01, 
               "Freq \u003E  0.02" = 0.02,"Freq \u003E  0.05" = 0.05, 
               "Freq \u003E  0.1" = 0.1, "Freq \u003E  0.2" = 0.2,
               "Freq \u003E  0.3" = 0.3)),
-        shiny::uiOutput("limits"),
-        shiny::uiOutput("Annotations_limits"),
+        uiOutput("limits"),
+        uiOutput("Annotations_limits"),
         HTML('<img src = "www/Logo.png" width = "60%" hight = "auto" >')
         ),
         plotlyOutput("zoomPlot"),
-        shiny::uiOutput("Download")
+        uiOutput("Download")
         )
 
 
@@ -117,15 +119,15 @@ ui  <- page_sidebar(
 server <- function(input, output, session) {
   bslib::bs_themer()
   # Storing the session for the Download Handler
-  session_store <- shiny::reactiveValues()
+  session_store <- reactiveValues()
   # This variable is updated every time there is a Download and is cached, this allows to download an unpadated plot
-  rv <- shiny::reactiveValues(download_flag = 0)
+  rv <- reactiveValues(download_flag = 0)
   options(warn = -1)
 
   
 # Coordinates -----------------------------------
   
-  Coordinates <- shiny::reactive({
+  Coordinates <- reactive({
     if ( is.null(input$FastCall_Results_1)|input$Genome == "") {
       return(NULL)}
     else{
@@ -144,12 +146,12 @@ server <- function(input, output, session) {
 
 # File and target data first individual -----------------------------------
 
-    file_data_1 <- shiny::reactive({
+    file_data_1 <- reactive({
       if (is.null(input$HSLM_1)) {
       return(NULL)
       }
     else{
-     file_data_1 <- utils::read.table(input$HSLM_1$datapath, fill=T, quote="\"", sep="\t", h = T) |> 
+     file_data_1 <- read.table(input$HSLM_1$datapath, fill=T, quote="\"", sep="\t", h = T) |> 
        select(dplyr::any_of(c("Chr", "Start", "End", "GC_content", "Mappability", "NRC_poolNorm", "Log2R", "SegMean", "Class", "Chromosome", "Position", "Exon"))) |> 
          mutate(dplyr::across(where(is.double), ~ round(.,2)))
        
@@ -177,7 +179,7 @@ server <- function(input, output, session) {
   
 
       
-    fast_call_1 <- shiny::reactive({
+    fast_call_1 <- reactive({
       if (is.null(input$FastCall_Results_1)| input$Genome == "") {
         return(NULL)
         }
@@ -212,7 +214,7 @@ server <- function(input, output, session) {
 
  # File and FastCall data second individual ----------------------------------
 
-    file_data_2 <- shiny::reactive({
+    file_data_2 <- reactive({
       if (is.null(input$HSLM_2)) {
         return(NULL)
       }
@@ -246,7 +248,7 @@ server <- function(input, output, session) {
     
     
     
-    fast_call_2 <- shiny::reactive({
+    fast_call_2 <- reactive({
       if (is.null(input$FastCall_Results_2)| input$Genome == "" | x$val == 1) {
         return(NULL)
       }
@@ -282,7 +284,7 @@ server <- function(input, output, session) {
 
 # File and FastCall data third individual -----------------------------------
     
-    file_data_3 <- shiny::reactive({
+    file_data_3 <- reactive({
       if (is.null(input$HSLM_3)) {
         return(NULL)
       }
@@ -316,7 +318,7 @@ server <- function(input, output, session) {
     
     
     
-    fast_call_3 <- shiny::reactive({
+    fast_call_3 <- reactive({
       if (is.null(input$FastCall_Results_3)| input$Genome == "") {
         return(NULL)
       }
@@ -353,7 +355,7 @@ server <- function(input, output, session) {
 
 #First individual  
 
-  subset_data_1 <- shiny::reactive({
+  subset_data_1 <- reactive({
     
   if(is.null(file_data_1())){return(NULL)}
   else{
@@ -375,9 +377,9 @@ server <- function(input, output, session) {
     subset_data_1 <-  subset_data_1 |>
       mutate(Text = paste( " Log2R: ", Log2R, "<br>", "Start:", Start, "<br>", "End:", End))}
   return(subset_data_1)}
-   }) |> shiny::bindCache(input$chr, file_data_1())
+   }) |> bindCache(input$chr, file_data_1())
   
-  subset_data_1_range <- shiny::reactive({  if(is.null(subset_data_1())){return(NULL)}
+  subset_data_1_range <- reactive({  if(is.null(subset_data_1())){return(NULL)}
     else{
     subset_data_1() |> 
     filter(Start >= input$slider[1] & End <= input$slider[2])}
@@ -386,7 +388,7 @@ server <- function(input, output, session) {
   
 #Second individual 
   
-  subset_data_2 <- shiny::reactive({
+  subset_data_2 <- reactive({
     
     if(is.null(file_data_2())){return(NULL)}
     else{
@@ -408,9 +410,9 @@ server <- function(input, output, session) {
         subset_data_2 <-  subset_data_2 |>
           mutate(Text = paste( " Log2R: ", Log2R, "<br>", "Start:", Start, "<br>", "End:", End))}
       return(subset_data_2)}
-  }) |> shiny::bindCache(input$chr, file_data_2())
+  }) |> bindCache(input$chr, file_data_2())
   
-  subset_data_2_range <- shiny::reactive({  if(is.null(file_data_2())){return(NULL)}
+  subset_data_2_range <- reactive({  if(is.null(file_data_2())){return(NULL)}
     else{
       subset_data_2() |> 
         filter(Start >= input$slider[1] & End <= input$slider[2])}
@@ -418,7 +420,7 @@ server <- function(input, output, session) {
   
 #Third individual  
    
-  subset_data_3 <- shiny::reactive({
+  subset_data_3 <- reactive({
     
     if(is.null(file_data_3())){return(NULL)}
     else{
@@ -440,9 +442,9 @@ server <- function(input, output, session) {
         subset_data_3 <-  subset_data_3 |>
           mutate(Text = paste( " Log2R: ", Log2R, "<br>", "Start:", Start, "<br>", "End:", End))}
       return(subset_data_3)}
-  }) |> shiny::bindCache(input$chr, file_data_3())
+  }) |> bindCache(input$chr, file_data_3())
   
-  subset_data_3_range <- shiny::reactive({  if(is.null(file_data_3())){return(NULL)}
+  subset_data_3_range <- reactive({  if(is.null(file_data_3())){return(NULL)}
     else{
       subset_data_3() |> 
         filter(Start >= input$slider[1] & End <= input$slider[2])}
@@ -451,86 +453,86 @@ server <- function(input, output, session) {
 
 #First individual
   
-rects_1 <- shiny::reactive({fast_call_1() |> filter(Chromosome == input$chr)})|>
-    shiny::bindCache(input$chr,fast_call_1())
+rects_1 <- reactive({fast_call_1() |> filter(Chromosome == input$chr)})|>
+    bindCache(input$chr,fast_call_1())
   
   
-rects_1_range <- shiny::reactive ({
+rects_1_range <- reactive ({
     if (is.null(input$slider)| input$Genome == "") {
       return(NULL)
     }
     else{rects_1_range <- rects_1() |>
       filter(Start >= input$slider[1] & End <= input$slider[2])
     return(rects_1_range)}
-  })|> shiny::bindCache(input$slider, rects_1())
+  })|> bindCache(input$slider, rects_1())
 
 
 #Second individual   
   
-rects_2 <- shiny::reactive({fast_call_2() |> filter(Chromosome == input$chr)})|>
-  shiny::bindCache(input$chr,fast_call_2())
+rects_2 <- reactive({fast_call_2() |> filter(Chromosome == input$chr)})|>
+  bindCache(input$chr,fast_call_2())
   
-  rects_2_range <- shiny::reactive ({
+  rects_2_range <- reactive ({
     if (is.null(input$slider[1])| input$Genome == "") {
       return(NULL)
      }
     else { rects_2() |>
       filter(Start >= input$slider[1] & End <= input$slider[2])}
-   })|> shiny::bindCache(input$slider, rects_2())
+   })|> bindCache(input$slider, rects_2())
    
   
 #Third individual
   
-  rects_3 <- shiny::reactive({fast_call_3() |> filter(Chromosome == input$chr)})|>
-    shiny::bindCache(input$chr,fast_call_3())
+  rects_3 <- reactive({fast_call_3() |> filter(Chromosome == input$chr)})|>
+    bindCache(input$chr,fast_call_3())
   
-  rects_3_range <- shiny::reactive ({
+  rects_3_range <- reactive ({
     if (is.null(input$slider[1])| input$Genome == "") {
      return(NULL)
      }
    else{rects_3() |>
       filter(Start >= input$slider[1] & End <= input$slider[2])}
-   })|> shiny::bindCache(input$slider, rects_3())
+   })|> bindCache(input$slider, rects_3())
  
   
 # Subsetting variants annotations data ---------------------------------------------
  
-  Annot_SV_D <- shiny::reactive({
+  Annot_SV_D <- reactive({
     if(input$AnnotSV){"AnnotSV BenignSV (v. 3.4)"}
     else{return(NULL)}
   })
 
-  DGV_Merge_D <- shiny::reactive({
+  DGV_Merge_D <- reactive({
     if(input$DGV_Merge){
       "dgvMerged (last updated 2020-02-25)"}
     else{return(NULL)}
   })
 
-  DGV_Gold_D <- shiny::reactive({
+  DGV_Gold_D <- reactive({
       if(input$DGV_Gold){
        "dgvGold (last updated 2016-05-15)"}
     else{return(NULL)}
   })
 
-  GnomAD_D <- shiny::reactive({
+  GnomAD_D <- reactive({
     if(input$GnomAD_Genome){
       c("gnomad_v2.1_sv.controls_only.site", "gnomad.v4.1.sv.non_neuro_controls.sites")}
     else{return(NULL)}
   })
   
-  GnomAD_Exome_D <- shiny::reactive({
+  GnomAD_Exome_D <- reactive({
     if(input$GnomAD_Exome){
       GnomAD_Exome_D <-  "gnomad.v4.1.cnv.non_neuro_controls"}
     else{return(NULL)}
   })
   
 
-  Annotations_list <-shiny::reactive({
+  Annotations_list <-reactive({
     Annotations_list<-c(Annot_SV_D(), DGV_Gold_D(), DGV_Merge_D(), GnomAD_D(),  GnomAD_Exome_D())
     Annotations_list
   })
   
-  Annotations_subset <-shiny::reactive({
+  Annotations_subset <-reactive({
     if(input$Genome == "GRCh37"){
       
       Annotations_37 |>  
@@ -557,10 +559,10 @@ rects_2 <- shiny::reactive({fast_call_2() |> filter(Chromosome == input$chr)})|>
     
     else {return(NULL)}
     
-  }) |>  shiny::bindCache (input$Genome, input$chr, input$Type, input$Freq, Annotations_list(), fast_call_1())
+  }) |>  bindCache (input$Genome, input$chr, input$Type, input$Freq, Annotations_list(), fast_call_1())
   
   
-  CNV1 <- shiny::reactive ({
+  CNV1 <- reactive ({
     if(!is.null(Annotations_subset())){
     if(input$AnnotSV){
       Annotations_subset() |>  filter( AnnotSV_Present == "No")  }
@@ -569,7 +571,7 @@ rects_2 <- shiny::reactive({fast_call_2() |> filter(Chromosome == input$chr)})|>
   })
 
   
-  CNV_FC <- shiny::reactive({
+  CNV_FC <- reactive({
     if(!is.null(Annotations_subset())){
       CNV1() |> 
       select(Start_FastCall, End_FastCall) |> 
@@ -578,7 +580,7 @@ rects_2 <- shiny::reactive({fast_call_2() |> filter(Chromosome == input$chr)})|>
       })
   
 
-  CNV2 <-shiny::reactive({
+  CNV2 <-reactive({
     if(!is.null(CNV1())){
       v <- c(1)
       k = 1
@@ -606,9 +608,9 @@ rects_2 <- shiny::reactive({fast_call_2() |> filter(Chromosome == input$chr)})|>
        
       }}
     else{return(NULL)}
-    }) |> shiny::bindCache(CNV1(), CNV_FC())
+    }) |> bindCache(CNV1(), CNV_FC())
   
-  CNV3 <- shiny::reactive({
+  CNV3 <- reactive({
     if(!is.null(CNV2())){
       v2 <- c(1)
       k2 = 1
@@ -638,12 +640,12 @@ rects_2 <- shiny::reactive({fast_call_2() |> filter(Chromosome == input$chr)})|>
       CNV3
       }}
    else{return(NULL)}
-   })|> shiny::bindCache(CNV2())
+   })|> bindCache(CNV2())
   
 
 # Subsetting genes annotations data ---------------------------------------
 
-genes_annotations <-shiny::reactive ({
+genes_annotations <-reactive ({
   if(input$GenomeBrowser){
   
     if (input$Genome == "GRCh37"){
@@ -655,7 +657,7 @@ genes_annotations <-shiny::reactive ({
     }
   }
   else(return(NULL))
-  }) |> shiny::bindCache(input$Genome, input$chr)
+  }) |> bindCache(input$Genome, input$chr)
   
   
   rect_1_genes_annotation <- list(
@@ -664,7 +666,7 @@ genes_annotations <-shiny::reactive ({
   
   
   
-  rect_genes_annotation <- shiny::reactive({
+  rect_genes_annotation <- reactive({
     rect_genes_annotation_1 <- list()
   for (i in c(1:dim(genes_annotations())[1])) {
     rect_1_genes_annotation[["x0"]] <- genes_annotations()[i,]$Start
@@ -674,14 +676,14 @@ genes_annotations <-shiny::reactive ({
   }
     return(rect_genes_annotation_1)
     
-  })|> shiny::bindCache(genes_annotations())
+  })|> bindCache(genes_annotations())
 
 
 # Subsetting exons annotations --------------------------------------------
 
   
   
-  exons_annotations_1 <-shiny::reactive({
+  exons_annotations_1 <-reactive({
     if(input$GenomeBrowser){
       if (input$Genome == "GRCh37"){
         exons <- exons_annotation_37 
@@ -694,10 +696,10 @@ genes_annotations <-shiny::reactive ({
       }
       else(return(NULL))}
     else(return(NULL))
-  })|> shiny::bindCache(input$Genome)
+  })|> bindCache(input$Genome)
   
   
-  exons_annotations <-shiny::reactive ({
+  exons_annotations <-reactive ({
     if (dim(rects_1())[1]>0){
       genes <- genes_annotations() |> 
         dplyr::inner_join(rects_1() , dplyr::join_by(overlaps(Start, End, Start, End))) 
@@ -710,7 +712,7 @@ genes_annotations <-shiny::reactive ({
     }
     else(return(NULL))
     
-  })|> shiny::bindCache(input$chr, genes_annotations(), exons_annotations_1())
+  })|> bindCache(input$chr, genes_annotations(), exons_annotations_1())
   
   
       rect_1_exons_annotation <- list(
@@ -721,7 +723,7 @@ genes_annotations <-shiny::reactive ({
       
       
       
-      rect_exons_annotation <- shiny::reactive({
+      rect_exons_annotation <- reactive({
       if(!is.null(exons_annotations())){
           if(dim(exons_annotations())[1] >0){
         
@@ -737,35 +739,35 @@ genes_annotations <-shiny::reactive ({
           }
         else{return(NULL)}}
         else{return(NULL)}
-      }) |> shiny::bindCache(exons_annotations())
+      }) |> bindCache(exons_annotations())
     
 
       
-shapes <- shiny::reactive({
+shapes <- reactive({
   c(rect_genes_annotation(), rect_exons_annotation())
-  }) |> shiny::bindCache(rect_genes_annotation(), rect_exons_annotation())
+  }) |> bindCache(rect_genes_annotation(), rect_exons_annotation())
       
 # First button -------------------------------------------------------
 
-   x <- shiny::reactiveValues(val = 1)
+   x <- reactiveValues(val = 1)
    
-   shiny::observeEvent(input$Button_1, {
+   observeEvent(input$Button_1, {
      x$val = x$val *(-1) 
    })
    
-   output$Button_1  =shiny::renderUI({
+   output$Button_1  =renderUI({
      if(x$val == 1){
-      shiny::actionButton("Button_1", "Add new sample")
+      actionButton("Button_1", "Add new sample")
        }
-     else { shiny::actionButton("Button_1", "Remove sample")}
+     else { actionButton("Button_1", "Remove sample")}
    })
    
    
-    output$Second_Individual=shiny::renderUI({
+    output$Second_Individual=renderUI({
       if(x$val == -1){list(
         
-        shiny::fileInput("FastCall_Results_2", "Load the CNV calls file"),
-        shiny::fileInput("HSLM_2", "If available load the HSLM/TR level CN estimation file"))
+        fileInput("FastCall_Results_2", "Load the CNV calls file"),
+        fileInput("HSLM_2", "If available load the HSLM/TR level CN estimation file"))
         
         }
       else{return(NULL)}
@@ -778,35 +780,35 @@ shapes <- shiny::reactive({
 
     
     
-    z <- shiny::reactiveValues(val = 1)
+    z <- reactiveValues(val = 1)
     
-    shiny::observeEvent(input$Button_2, {
+    observeEvent(input$Button_2, {
       z$val = z$val *(-1) 
     })
     
     
-    A <- shiny::reactive({      
+    A <- reactive({      
       if (is.null(input$FastCall_Results_2)){return(NULL)}
       
       else if (is.null(fast_call_2())){return(NULL)}
       
       else if (z$val == 1){
-        shiny::actionButton("Button_2", "Add new sample") }
+        actionButton("Button_2", "Add new sample") }
       
-      else { shiny::actionButton("Button_2", "Remove sample")} 
+      else { actionButton("Button_2", "Remove sample")} 
     })
     
-    output$Button_2  <- shiny::renderUI({
+    output$Button_2  <- renderUI({
       K = A()
       return(K)
     }) 
     
     
-    output$Third_Individual=shiny::renderUI({
+    output$Third_Individual=renderUI({
       if(z$val == -1){list(
         
-        shiny::fileInput("FastCall_Results_3", "Load the CNV calls file"),
-        shiny::fileInput("HSLM_3", "If available load the HSLM/TR level CN estimation file"))
+        fileInput("FastCall_Results_3", "Load the CNV calls file"),
+        fileInput("HSLM_3", "If available load the HSLM/TR level CN estimation file"))
       }
       else{return(NULL)}
       
@@ -816,28 +818,28 @@ shapes <- shiny::reactive({
 
 # Setting the range slider for coordinates------------------------------------------------
    
-output$limits=shiny::renderUI({
+output$limits=renderUI({
       if (is.null(input$FastCall_Results_1)|input$Genome == "") {
         return(NULL)}
       else{
         
-        shiny::sliderInput('slider','Choose the chromosome coordinates for the download',
+        sliderInput('slider','Choose the chromosome coordinates for the download',
           min=1,
           max=Coordinates()$End,
           value=c(1,
             Coordinates()$End))}
-    }) |> shiny::bindCache(Coordinates())
+    }) |> bindCache(Coordinates())
     
 
 
 # Setting the range slider for annotations --------------------------------
 
     
-    output$Annotations_limits=shiny::renderUI({
+    output$Annotations_limits=renderUI({
       if (!is.null(input$FastCall_Results_1)){
         if(!(is.null(CNV3()))){
           if (dim(CNV3())[1] >0){
-            shiny::sliderInput('slider_Annotations',
+            sliderInput('slider_Annotations',
             'Choose the maximum number of overlapping CNVs to visualize',
             min=0,
             max=max(CNV3()$level),
@@ -854,10 +856,10 @@ output$limits=shiny::renderUI({
 # Download ----------------------------------------------------------------
 
 
-output$Download = shiny::renderUI({
+output$Download = renderUI({
   if (!is.null(input$FastCall_Results_1)){
     if (input$Genome  != ""){
-      shiny::downloadButton("downloadplot", "Download HTML")}
+      downloadButton("downloadplot", "Download HTML")}
   }
   else{return(NULL)}
   })
@@ -866,7 +868,7 @@ output$Download = shiny::renderUI({
 
 # pal 1---------------------------------------------------------------------
 
-    pal_1 <- shiny::reactive({
+    pal_1 <- reactive({
       if(is.null(subset_data_1_range())){return (NULL)}
       
       else if("IN" %in% subset_data_1_range()$Class){
@@ -881,7 +883,7 @@ output$Download = shiny::renderUI({
 
 # pal 2---------------------------------------------------------------------
     
-    pal_2 <- shiny::reactive({
+    pal_2 <- reactive({
       if(is.null(subset_data_2_range())){return (NULL)}
       
       else if("IN" %in% subset_data_2_range()$Class){
@@ -897,7 +899,7 @@ output$Download = shiny::renderUI({
     
 # pal 3---------------------------------------------------------------------
     
-    pal_3 <- shiny::reactive({
+    pal_3 <- reactive({
       if(is.null(subset_data_3_range())){return (NULL)}
       
       else if("IN" %in% subset_data_3_range()$Class){
@@ -2055,20 +2057,20 @@ if(!is.null(exons_annotations())){
       session_store$plt <- plt
       session_store$plt
 
-   })  |>  shiny::bindCache(input$chr, input$Prob, input$Type, input$Freq, input$slider, input$slider_Annotations, input$GenomeBrowser,
+   })  |>  bindCache(input$chr, input$Prob, input$Type, input$Freq, input$slider, input$slider_Annotations, input$GenomeBrowser,
                       input$HSLM_1, input$FastCall_Results_1,input$True_Set, input$HSLM_2, input$FastCall_Results_2, 
                       input$HSLM_3, input$FastCall_Results_3, input$AnnotSV, input$DGV_Merge,input$ShareAxes,
                      input$DGV_Gold, input$GnomAD_Genome, input$GnomAD_Exome, input$Genome, input$Set_y_axis, rv$download_flag, z$val, x$val 
                      )
     
     
-    output$downloadplot <- shiny::downloadHandler(
+    output$downloadplot <- downloadHandler(
       filename = function() {
         paste(Sys.Date(), " ", input$chr," Coordinates", " ", input$slider[1],"-", input$slider[2],  ".html", sep = "")
       },
       content = function(file) {
         # export plotly html widget as a temp file to download.
-        htmlwidgets::saveWidget(plotly::as_widget(ishiny::isolate(session_store$plt)), file, selfcontained = TRUE)
+        htmlwidgets::saveWidget(plotly::as_widget(iisolate(session_store$plt)), file, selfcontained = TRUE)
         rv$download_flag <- rv$download_flag + 1
       }
     )

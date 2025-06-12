@@ -2,19 +2,19 @@
 % Please edit documentation in R/Plot_visualization.R
 \name{Plot_Visualization}
 \alias{Plot_Visualization}
-\title{Plotting CNVs detection results}
+\title{Plot CNVs}
 \usage{
 Plot_Visualization(...)
 }
 \arguments{
-\item{...}{No input is needed to run the Shiny App}
+\item{No}{params}
 }
 \value{
 A shiny App
 }
 \description{
-Plotting CNVs detection results
+Plot CNVs
 }
 \examples{
-Plot_Visualization()
+Plot_Visualization ()
 }
