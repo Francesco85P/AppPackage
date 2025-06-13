@@ -7,7 +7,7 @@
 #' @returns the merged file (HSLM input for Plot_visualization)
 #' @export
 #'
-#' @examples Excavator_merge_bed(my_file_path_target_bed, my_file_path_HSLM, my_merged_file_name)
+#' @examples Excavator_merge_bed(my_file_path_target_bed, my_file_path_HSLM, EXcmy_merged_file_name)
 Excavator_merge_bed <- function(file_path_target_bed, file_path_HSLM, merged_file_name = "merged_data.txt"){
  
   library(dplyr)
