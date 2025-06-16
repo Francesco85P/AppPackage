@@ -73,6 +73,7 @@ ui  <- page_sidebar(
         choices = c("","GRCh37", "GRCh38")),
       shiny::fileInput("FastCall_Results_1", "Load the CNV calls file"),
       shiny::fileInput("HSLM_1", "If available load the HSLM/TR level CN estimation file"),
+      shiny::fileInput("Bed", "If available load the bed file of annotated targeted regions"),
       shiny::checkboxInput("GenomeBrowser", "Show genes annotations", value = FALSE, width = NULL),
       shiny::checkboxInput("ShareAxes", "Share x axis", value = TRUE, width = NULL),
       shiny::checkboxInput("Set_y_axis", "Set the same Log2R range", value = FALSE, width = NULL),
@@ -143,213 +144,263 @@ server <- function(input, output, session) {
       else{return(NULL)} }
   })
   
+# Bed file -----------------------------------------------------------
+  
+  target_data <- shiny::reactive({
+    if (is.null(input$Bed)) {
+      return(NULL)
+    }
+    else{
+      target_data <-utils::read.table(input$Bed$datapath, quote="\"",fill=T,
+        col.names= c("Chromosome","Start","End", "Exon"))
+    }
+  })
+  
+  
 
 # File and target data first individual -----------------------------------
 
-    file_data_1 <- shiny::reactive({
-      if (is.null(input$HSLM_1)) {
+  file_data_1_pre <- shiny::reactive({
+    if (is.null(input$HSLM_1)) {
       return(NULL)
-      }
-    else{
-     file_data_1 <- read.table(input$HSLM_1$datapath, fill=T, quote="\"", sep="\t", h = T) |> 
-       select(dplyr::any_of(c("Chr", "Start", "End", "GC_content", "Mappability", "NRC_poolNorm", "Log2R", "SegMean", "Class", "Chromosome", "Position", "Exon"))) |> 
-         mutate(dplyr::across(where(is.double), ~ round(.,2)))
-       
-       if(is.null(file_data_1$Position)) {
-         file_data_1 <- file_data_1 |> 
-           mutate(Position = (Start + End)/2)}
-       
-       if(is.null(file_data_1$Chromosome)) {
-         file_data_1 <- file_data_1 |> 
-           rename("Chromosome" = "Chr")}
-       
-       if(is.null(file_data_1$Log2R)) {
-         file_data_1 <- file_data_1 |> 
-           rename("Log2R" = "NRC_poolNorm") }  
-     
-      if(is.null(file_data_1$Class)) {
-       file_data_1 <- file_data_1 |> 
-         mutate(Class = "Yes") }
-     
-      if(is.null(file_data_1$Exon)) {
-       file_data_1$Exon = NA }
-     return(file_data_1)
     }
-    })
-  
-
+    else{
+      file_data_1 <- utils::read.table(input$HSLM_1$datapath, fill=T, quote="\"", sep="\t", h = T) |> 
+        select(any_of(c("Chr", "Start", "End", "GC_content", "Mappability", "NRC_poolNorm", "Log2R", "SegMean", "Class", "Chromosome", "Position", "Exon"))) |> 
+        mutate(across(where(is.double), ~ round(.,2)))
       
-    fast_call_1 <- shiny::reactive({
-      if (is.null(input$FastCall_Results_1)| input$Genome == "") {
-        return(NULL)
-        }
-      else{
-        fast_call_1 <- utils::read.table(input$FastCall_Results_1$datapath, header = T,
+      if(is.null(file_data_1$Position)) {
+        file_data_1 <- file_data_1 |> 
+          mutate(Position = (Start + End)/2)}
+      
+      if(is.null(file_data_1$Chromosome)) {
+        file_data_1 <- file_data_1 |> 
+          rename("Chromosome" = "Chr")}
+      
+      if(is.null(file_data_1$Log2R)) {
+        file_data_1 <- file_data_1 |> 
+          rename("Log2R" = "NRC_poolNorm") }  
+      
+      if(is.null(file_data_1$Class)) {
+        file_data_1 <- file_data_1|> 
+          mutate(Class = "Yes") }
+      
+      if(is.null(file_data_1$Exon)) {
+        file_data_1$Exon = NA }
+      
+      return(file_data_1)
+    }
+  })
+  
+  file_data_1 <- shiny::reactive({
+    if(!is.null(input$Bed) & ! is.null(input$HSLM_1)){
+      file_data_1_merged <- 
+        file_data_1_pre() |> 
+        select(!Exon) |> 
+        dplyr::left_join(target_data(),by=c("Chromosome","Start", "End"))
+    }
+    else{file_data_1_merged <- file_data_1_pre()}
+    return(file_data_1_merged)
+  })
+  
+  
+  
+  
+  fast_call_1 <- shiny::reactive({
+    if (is.null(input$FastCall_Results_1)| input$Genome == "") {
+      return(NULL)
+    }
+    else{
+      fast_call_1 <- utils::read.table(input$FastCall_Results_1$datapath, header = T,
         fill=T, quote="\"") 
-        
-        fast_call_1 <- fast_call_1 |> 
-        select(dplyr::any_of(c("Chr", "Chromosome","Start", "End", "Mutation", "CN", "Call",  "ProbCall")))
-        if(is.null(fast_call_1$Mutation)){
+      
+      fast_call_1 <- fast_call_1 |> 
+        select(any_of(c("Chr", "Chromosome","Start", "End", "Mutation", "CN", "Call",  "ProbCall")))
+      if(is.null(fast_call_1$Mutation)){
         fast_call_1 <- fast_call_1 |> 
           mutate(Mutation = case_when(
-          Call == -2 ~ "2-DEL",
-          Call == -1 ~ "DEL",
-          Call == 1 ~ "AMP",
-          TRUE ~ "2-AMP"))}
-        
-        if(is.null(fast_call_1$ProbCall)){fast_call_1$ProbCall = 1}
-        if(is.null(fast_call_1$CN)){fast_call_1$CN = "NA"}
-        if(is.null(fast_call_1$Call)){fast_call_1$Call = "NA"} 
-        
-        fast_call_1 <- fast_call_1 |> 
+            Call == -2 ~ "2-DEL",
+            Call == -1 ~ "DEL",
+            Call == 1 ~ "AMP",
+            TRUE ~ "2-AMP"))}
+      
+      if(is.null(fast_call_1$ProbCall)){fast_call_1$ProbCall = 1}
+      if(is.null(fast_call_1$CN)){fast_call_1$CN = "NA"}
+      if(is.null(fast_call_1$Call)){fast_call_1$Call = "NA"} 
+      
+      fast_call_1 <- fast_call_1 |> 
         filter(ProbCall >= as.numeric(input$Prob)) |> 
         mutate(mid = (Start + End)/2 )
-        
-        names(fast_call_1) <- sub("Chr$", "Chromosome", names(fast_call_1))
-        
-        return(fast_call_1)
-        }
-    }) 
-
-
- # File and FastCall data second individual ----------------------------------
-
-    file_data_2 <- shiny::reactive({
-      if (is.null(input$HSLM_2)) {
-        return(NULL)
-      }
-      else{
-        file_data_2 <- utils::read.table(input$HSLM_2$datapath, fill=T, quote="\"", sep="\t", h = T) |> 
-          select(dplyr::any_of(c("Chr", "Start", "End", "GC_content", "Mappability", "NRC_poolNorm", "Log2R", "SegMean", "Class", "Chromosome", "Position", "Exon"))) |> 
-          mutate(dplyr::across(where(is.double), ~ round(.,2)))
-        
-        if(is.null(file_data_2$Position)) {
-          file_data_2 <- file_data_2 |> 
-            mutate(Position = (Start + End)/2)}
-        
-        if(is.null(file_data_2$Chromosome)) {
-          file_data_2 <- file_data_2 |> 
-            rename("Chromosome" = "Chr")}
-        
-        if(is.null(file_data_2$Log2R)) {
-          file_data_2 <- file_data_2 |> 
-            rename("Log2R" = "NRC_poolNorm") }  
-        
-        if(is.null(file_data_2$Class)) {
-          file_data_2 <- file_data_2 |> 
-            mutate(Class = "Yes") }
-        
-        if(is.null(file_data_2$Exon)) {
-          file_data_2$Exon = NA }
-        
-        return(file_data_2)
-      }
-    })
-    
-    
-    
-    fast_call_2 <- shiny::reactive({
-      if (is.null(input$FastCall_Results_2)| input$Genome == "" | x$val == 1) {
-        return(NULL)
-      }
-      else{
-        fast_call_2 <- utils::read.table(input$FastCall_Results_2$datapath, header = T,
-          fill=T, quote="\"") 
-        
+      
+      names(fast_call_1) <- sub("Chr$", "Chromosome", names(fast_call_1))
+      
+      return(fast_call_1)
+    }
+  }) 
+  
+  
+  
+  # File and FastCall data second individual ----------------------------------
+  
+  file_data_2_pre <- shiny::reactive({
+    if (is.null(input$HSLM_2)) {
+      return(NULL)
+    }
+    else{
+      file_data_2 <- utils::read.table(input$HSLM_2$datapath, fill=T, quote="\"", sep="\t", h = T) |> 
+        select(any_of(c("Chr", "Start", "End", "GC_content", "Mappability", "NRC_poolNorm", "Log2R", "SegMean", "Class", "Chromosome", "Position", "Exon"))) |> 
+        mutate(across(where(is.double), ~ round(.,2)))
+      
+      if(is.null(file_data_2$Position)) {
+        file_data_2 <- file_data_2 |> 
+          mutate(Position = (Start + End)/2)}
+      
+      if(is.null(file_data_2$Chromosome)) {
+        file_data_2 <- file_data_2 |> 
+          rename("Chromosome" = "Chr")}
+      
+      if(is.null(file_data_2$Log2R)) {
+        file_data_2 <- file_data_2 |> 
+          rename("Log2R" = "NRC_poolNorm") }  
+      
+      if(is.null(file_data_2$Class)) {
+        file_data_2 <- file_data_2 |> 
+          mutate(Class = "Yes") }
+      
+      if(is.null(file_data_2$Exon)) {
+        file_data_2$Exon = NA }
+      
+      return(file_data_2)
+    }
+  })
+  
+  file_data_2 <- shiny::reactive({
+    if(!is.null(input$Bed) & ! is.null(input$HSLM_2)){
+      file_data_2_merged <- 
+        file_data_2_pre() |> 
+        select(!Exon) |> 
+        dplyr::left_join(target_data(),by=c("Chromosome","Start", "End"))
+    }
+    else{file_data_2_merged <- file_data_2_pre()}
+    return(file_data_2_merged)
+  })
+  
+  
+  
+  fast_call_2 <- shiny::reactive({
+    if (is.null(input$FastCall_Results_2)| input$Genome == "" | x$val == 1) {
+      return(NULL)
+    }
+    else{
+      fast_call_2 <- utils::read.table(input$FastCall_Results_2$datapath, header = T,
+        fill=T, quote="\"") 
+      
+      fast_call_2 <- fast_call_2 |> 
+        select(any_of(c("Chr", "Chromosome","Start", "End", "Mutation", "CN", "Call",  "ProbCall")))
+      if(is.null(fast_call_2$Mutation)){
         fast_call_2 <- fast_call_2 |> 
-          select(dplyr::any_of(c("Chr", "Chromosome","Start", "End", "Mutation", "CN", "Call",  "ProbCall")))
-        if(is.null(fast_call_2$Mutation)){
-          fast_call_2 <- fast_call_2 |> 
-            mutate(Mutation = case_when(
-              Call == -2 ~ "2-DEL",
-              Call == -1 ~ "DEL",
-              Call == 1 ~ "AMP",
-              TRUE ~ "2-AMP"))}
-        
-        if(is.null(fast_call_2$ProbCall)){fast_call_2$ProbCall = 1}
-        if(is.null(fast_call_2$CN)){fast_call_2$CN = "NA"}
-        if(is.null(fast_call_2$Call)){fast_call_2$Call = "NA"} 
-        
-        fast_call_2 <- fast_call_2 |> 
-          filter(ProbCall >= as.numeric(input$Prob)) |> 
-          mutate(mid = (Start + End)/2 )
-        
-        names(fast_call_2) <- sub("Chr$", "Chromosome", names(fast_call_2))
-        
-        return(fast_call_2)
-      }
-    }) 
-    
-    
-
-# File and FastCall data third individual -----------------------------------
-    
-    file_data_3 <- shiny::reactive({
-      if (is.null(input$HSLM_3)) {
-        return(NULL)
-      }
-      else{
-        file_data_3 <- utils::read.table(input$HSLM_3$datapath, fill=T, quote="\"", sep="\t", h = T) |> 
-          select(dplyr::any_of(c("Chr", "Start", "End", "GC_content", "Mappability", "NRC_poolNorm", "Log2R", "SegMean", "Class", "Chromosome", "Position", "Exon"))) |> 
-          mutate(dplyr::across(where(is.double), ~ round(.,2)))
-        
-        if(is.null(file_data_3$Position)) {
-          file_data_3 <- file_data_3 |> 
-            mutate(Position = (Start + End)/2)}
-        
-        if(is.null(file_data_3$Chromosome)) {
-          file_data_3 <- file_data_3 |> 
-            rename("Chromosome" = "Chr")}
-        
-        if(is.null(file_data_3$Log2R)) {
-          file_data_3 <- file_data_3 |> 
-            rename("Log2R" = "NRC_poolNorm") }  
-        
-        if(is.null(file_data_3$Class)) {
-          file_data_3 <- file_data_3 |> 
-            mutate(Class = "Yes") }
-        
-        if(is.null(file_data_3$Exon)) {
-          file_data_3$Exon = NA }
-        
-        return(file_data_3)
-      }
-    })
-    
-    
-    
-    fast_call_3 <- shiny::reactive({
-      if (is.null(input$FastCall_Results_3)| input$Genome == "") {
-        return(NULL)
-      }
-      else{
-        fast_call_3 <- utils::read.table(input$FastCall_Results_3$datapath, header = T,
-          fill=T, quote="\"") 
-        
+          mutate(Mutation = case_when(
+            Call == -2 ~ "2-DEL",
+            Call == -1 ~ "DEL",
+            Call == 1 ~ "AMP",
+            TRUE ~ "2-AMP"))}
+      
+      if(is.null(fast_call_2$ProbCall)){fast_call_2$ProbCall = 1}
+      if(is.null(fast_call_2$CN)){fast_call_2$CN = "NA"}
+      if(is.null(fast_call_2$Call)){fast_call_2$Call = "NA"} 
+      
+      fast_call_2 <- fast_call_2 |> 
+        filter(ProbCall >= as.numeric(input$Prob)) |> 
+        mutate(mid = (Start + End)/2 )
+      
+      names(fast_call_2) <- sub("Chr$", "Chromosome", names(fast_call_2))
+      
+      return(fast_call_2)
+    }
+  }) 
+  
+  
+  
+  # File and FastCall data third individual -----------------------------------
+  
+  file_data_3_pre <- shiny::reactive({
+    if (is.null(input$HSLM_3)) {
+      return(NULL)
+    }
+    else{
+      file_data_3 <- utils::read.table(input$HSLM_3$datapath, fill=T, quote="\"", sep="\t", h = T) |> 
+        select(any_of(c("Chr", "Start", "End", "GC_content", "Mappability", "NRC_poolNorm", "Log2R", "SegMean", "Class", "Chromosome", "Position", "Exon"))) |> 
+        mutate(across(where(is.double), ~ round(.,2)))
+      
+      if(is.null(file_data_3$Position)) {
+        file_data_3 <- file_data_3 |> 
+          mutate(Position = (Start + End)/2)}
+      
+      if(is.null(file_data_3$Chromosome)) {
+        file_data_3 <- file_data_3 |> 
+          rename("Chromosome" = "Chr")}
+      
+      if(is.null(file_data_3$Log2R)) {
+        file_data_3 <- file_data_3 |> 
+          rename("Log2R" = "NRC_poolNorm") }  
+      
+      if(is.null(file_data_3$Class)) {
+        file_data_3 <- file_data_3 |> 
+          mutate(Class = "Yes") }
+      
+      if(is.null(file_data_3$Exon)) {
+        file_data_3$Exon = NA }
+      
+      return(file_data_3)
+    }
+  })
+  
+  file_data_3 <- shiny::reactive({
+    if(!is.null(input$Bed) & ! is.null(input$HSLM_3)){
+      file_data_3_merged <- 
+        file_data_3_pre() |> 
+        select(!Exon) |> 
+        dplyr::left_join(target_data(),by=c("Chromosome","Start", "End"))
+    }
+    else{file_data_3_merged <- file_data_3_pre()}
+    return(file_data_3_merged)
+  })
+  
+  
+  
+  
+  fast_call_3 <- shiny::reactive({
+    if (is.null(input$FastCall_Results_3)| input$Genome == "") {
+      return(NULL)
+    }
+    else{
+      fast_call_3 <- utils::read.table(input$FastCall_Results_3$datapath, header = T,
+        fill=T, quote="\"") 
+      
+      fast_call_3 <- fast_call_3 |> 
+        select(any_of(c("Chr", "Chromosome","Start", "End", "Mutation", "CN", "Call",  "ProbCall")))
+      if(is.null(fast_call_3$Mutation)){
         fast_call_3 <- fast_call_3 |> 
-          select(dplyr::any_of(c("Chr", "Chromosome","Start", "End", "Mutation", "CN", "Call",  "ProbCall")))
-        if(is.null(fast_call_3$Mutation)){
-          fast_call_3 <- fast_call_3 |> 
-            mutate(Mutation = case_when(
-              Call == -2 ~ "2-DEL",
-              Call == -1 ~ "DEL",
-              Call == 1 ~ "AMP",
-              TRUE ~ "2-AMP"))}
-        
-        if(is.null(fast_call_3$ProbCall)){fast_call_3$ProbCall = 1}
-        if(is.null(fast_call_3$CN)){fast_call_3$CN = "NA"}
-        if(is.null(fast_call_3$Call)){fast_call_3$Call = "NA"} 
-        
-        fast_call_3 <- fast_call_3 |> 
-          filter(ProbCall >= as.numeric(input$Prob)) |> 
-          mutate(mid = (Start + End)/2 )
-        
-        names(fast_call_3) <- sub("Chr$", "Chromosome", names(fast_call_3))
-        
-        return(fast_call_3)
-      }
-    }) 
-    
+          mutate(Mutation = case_when(
+            Call == -2 ~ "2-DEL",
+            Call == -1 ~ "DEL",
+            Call == 1 ~ "AMP",
+            TRUE ~ "2-AMP"))}
+      
+      if(is.null(fast_call_3$ProbCall)){fast_call_3$ProbCall = 1}
+      if(is.null(fast_call_3$CN)){fast_call_3$CN = "NA"}
+      if(is.null(fast_call_3$Call)){fast_call_3$Call = "NA"} 
+      
+      fast_call_3 <- fast_call_3 |> 
+        filter(ProbCall >= as.numeric(input$Prob)) |> 
+        mutate(mid = (Start + End)/2 )
+      
+      names(fast_call_3) <- sub("Chr$", "Chromosome", names(fast_call_3))
+      
+      return(fast_call_3)
+    }
+  }) 
+  
   
 # Subsetting file data--------------------------------------------------------------
 
@@ -2060,7 +2111,8 @@ if(!is.null(exons_annotations())){
    })  |>  shiny::bindCache(input$chr, input$Prob, input$Type, input$Freq, input$slider, input$slider_Annotations, input$GenomeBrowser,
                       input$HSLM_1, input$FastCall_Results_1,input$True_Set, input$HSLM_2, input$FastCall_Results_2, 
                       input$HSLM_3, input$FastCall_Results_3, input$AnnotSV, input$DGV_Merge,input$ShareAxes,
-                     input$DGV_Gold, input$GnomAD_Genome, input$GnomAD_Exome, input$Genome, input$Set_y_axis, rv$download_flag, z$val, x$val 
+                     input$DGV_Gold, input$GnomAD_Genome, input$GnomAD_Exome, input$Genome, input$Set_y_axis, rv$download_flag, z$val, x$val,
+                      input$Bed
                      )
     
     
