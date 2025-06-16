@@ -26,16 +26,16 @@ RUN installr -d \
 #Create work directory and copy required files and folders into it
 RUN mkdir -p /app
 WORKDIR /app
-COPY data/37 /app/data/37
-COPY data/38 /app/data/38
-COPY data/genes_annotation_37.rds  /app/data
-COPY data/genes_annotation_38.rds  /app/data
-COPY data/Exons_37.rds  /app/data
-COPY data/Exons_38.rds  /app/data
-COPY data/www /app/data/www
-COPY data/hg38_Coordinates.rds /app/data
-COPY data/hg37_Coordinates.rds /app/data
-COPY R/Plot_visualization.R /app
+COPY data/37 /app/37
+COPY data/38 /app/38
+COPY data/genes_annotation_37.rds  /app
+COPY data/genes_annotation_38.rds  /app
+COPY data/Exons_37.rds  /app
+COPY data/Exons_38.rds  /app
+COPY data/www /app/www
+COPY data/hg38_Coordinates.rds /app
+COPY data/hg37_Coordinates.rds /app
+COPY R/app_for_Docker.R /app
 
 
 
