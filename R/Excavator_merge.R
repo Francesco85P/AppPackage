@@ -19,7 +19,7 @@ target_bed <-  target_data <-utils::read.table(file_path_target_bed, quote="\"",
   col.names= c("Chromosome","Start","End", "Exon"))
   
 
-file_path_output <- paste0(stringr::str_remove(file_path_HSLM, '/[^/]*\\..*'),"/",merged_file_name)
+file_path_output <- paste0(stringr::str_remove(file_path_HSLM, '/[^/]*\\..*'),"/",",Merged_file_name)
 merge_data <- dplyr::left_join(HSLM,target_bed,by=c("Chromosome","Start", "End"))
 utils::write.table(merge_data, file_path_output, quote = FALSE, row.names = FALSE, sep = "\t")  
 }
