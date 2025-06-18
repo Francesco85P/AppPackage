@@ -35,7 +35,7 @@ COPY data/Exons_38.rds  /app
 COPY data/www /app/www
 COPY data/hg38_Coordinates.rds /app
 COPY data/hg37_Coordinates.rds /app
-COPY R/app_for_Docker.R /app
+COPY tools/app_for_Docker.R /app
 
 
 
