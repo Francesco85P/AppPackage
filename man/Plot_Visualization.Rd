@@ -16,5 +16,5 @@ A shiny App
 Plot CNVs
 }
 \examples{
-Plot_Visualization ()
+example
 }
