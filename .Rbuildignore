@@ -2,6 +2,6 @@
 ^\.Rproj\.user$
 ^LICENSE\.md$
 ^Dockerfile$
-^R/app_for_Docker\.R$
+^tools/app_for_Docker\.R$
 ^\.github$
 ^README\.Rmd$

@@ -6,7 +6,7 @@ library(shiny)
 #' @returns A shiny App
 #' @export
 #'
-#' @examples Plot_Visualization ()
+#' @examples run the app
 Plot_Visualization <- function(...) {
   
   
@@ -28,8 +28,8 @@ Plot_Visualization <- function(...) {
   options(shiny.maxRequestSize=50*1024^2) #max dim for input files 
   options(shiny.host = "0.0.0.0")
   options(shiny.port = 6868)
-  shiny::addResourcePath(prefix = 'www', directoryPath = "data/www")
-  shiny::shinyOptions(cache = cachem::cache_mem(max_size = 500e6))
+  addResourcePath('www', directoryPath = "inst/www")
+  shinyOptions(cache = cachem::cache_mem(max_size = 500e6))
   options(warn = -1)
   
   
