@@ -16,7 +16,7 @@ A shiny App
 Plot CNVs
 }
 \examples{
-#' if (interactive()) {
+if (interactive()) {
   Plot_Visualization()
 }
 }
