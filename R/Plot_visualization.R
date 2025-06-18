@@ -6,11 +6,13 @@ library(shiny)
 #' @returns A shiny App
 #' @export
 #'
-#' @examples run the app
+#' @examples #' if (interactive()) {
+#'   Plot_Visualization()
+#' }
 Plot_Visualization <- function(...) {
   
   
-
+  library(shiny)
   library(dplyr)
   library(stringr)
   library(plotly)
