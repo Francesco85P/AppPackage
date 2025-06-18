@@ -28,8 +28,8 @@ Plot_Visualization <- function(...) {
   options(shiny.maxRequestSize=50*1024^2) #max dim for input files 
   options(shiny.host = "0.0.0.0")
   options(shiny.port = 6868)
-  addResourcePath('www', directoryPath = "inst/www")
-  shinyOptions(cache = cachem::cache_mem(max_size = 500e6))
+  shiny::addResourcePath('www', directoryPath = "inst/www")
+  shiny::shinyOptions(cache = cachem::cache_mem(max_size = 500e6))
   options(warn = -1)
   
   
