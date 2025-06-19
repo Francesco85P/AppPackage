@@ -16,6 +16,7 @@ Imports:
     htmlwidgets,
     plotly,
     shiny,
-    stringr
+    stringr,
+    cachem
 URL: https://github.com/Francesco85P/AppPackage
 BugReports: https://github.com/Francesco85P/AppPackage/issues

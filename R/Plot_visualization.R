@@ -1,9 +1,9 @@
-library(shiny)
+
 #' Plot CNVs
 #'
-#' @param No params
+#' @param ... Additional arguments passed to `shinyApp()`. Currently unused.
 #'
-#' @returns A shiny App
+#' @returns Runs a Shiny application in the default web browser.
 #' @export
 #'
 #' @examples
@@ -13,14 +13,6 @@ library(shiny)
 
 Plot_Visualization <- function(...) {
   
-  
-  library(shiny)
-  library(dplyr)
-  library(stringr)
-  library(plotly)
-  library(htmlwidgets)
-  library(bslib)
-  library(arrow)
   
   
   # Arguments ---------------------------------------------------------------
@@ -40,39 +32,39 @@ Plot_Visualization <- function(...) {
   
   # Read variants annotations data ---------------------------------------------------
   
-  Annotations_37 <- arrow::open_dataset("data/37") |> collect()
-  Annotations_38 <- arrow::open_dataset("data/38") |> collect()
+  Annotations_37 <- arrow::open_dataset("inst/37") |> dplyr::collect()
+  Annotations_38 <- arrow::open_dataset("inst/38") |> dplyr::collect()
   
   
   
   # Read genes annotation data ----------------------------------------------
   
-  genes_annotation_38 <-readRDS("data/genes_annotation_38.rds")
-  genes_annotation_37 <-readRDS("data/genes_annotation_37.rds")
+  genes_annotation_38 <-readRDS("inst/genes_annotation_38.rds")
+  genes_annotation_37 <-readRDS("inst/genes_annotation_37.rds")
   
   
   # Read exons annotations --------------------------------------------------
   
-  exons_annotation_37 <- readRDS("data/Exons_37.rds")
-  exons_annotation_38 <- readRDS("data/Exons_38.rds")
+  exons_annotation_37 <- readRDS("inst/Exons_37.rds")
+  exons_annotation_38 <- readRDS("inst/Exons_38.rds")
   
   # Read chromosome coordinates --------------------------------------------
   
-  hg37_Chromosome_coordinates <- readRDS("data/hg37_Coordinates.rds")
-  hg38_Chromosome_coordinates <- readRDS("data/hg38_Coordinates.rds")
+  hg37_Chromosome_coordinates <- readRDS("inst/hg37_Coordinates.rds")
+  hg38_Chromosome_coordinates <- readRDS("inst/hg38_Coordinates.rds")
   
   
   # ui ----------------------------------------------------------------------  
   
   
-ui  <- page_sidebar(
+ui  <- bslib::page_sidebar(
   theme = bslib::bs_theme(
   bootswatch = "cosmo"),
 
  # Application title
   title ="ReViewCNV",
   #tags$style(".recalculating { opacity: inherit !important; }"),
-    sidebar = sidebar(width = "35%",
+    sidebar = bslib::sidebar(width = "35%",
       shiny::selectInput("Genome", "Select the Genome version", selected = NULL,
         choices = c("","GRCh37", "GRCh38")),
       shiny::fileInput("FastCall_Results_1", "Load the CNV calls file"),
@@ -113,7 +105,7 @@ ui  <- page_sidebar(
         shiny::uiOutput("Annotations_limits"),
         shiny::HTML('<img src = "www/Logo.png" width = "60%" hight = "auto" >')
         ),
-        plotlyOutput("zoomPlot"),
+        plotly::plotlyOutput("zoomPlot"),
         shiny::uiOutput("Download")
         )
 
@@ -170,8 +162,8 @@ server <- function(input, output, session) {
     }
     else{
       file_data_1 <- utils::read.table(input$HSLM_1$datapath, fill=T, quote="\"", sep="\t", h = T) |> 
-        select(any_of(c("Chr", "Start", "End", "GC_content", "Mappability", "NRC_poolNorm", "Log2R", "SegMean", "Class", "Chromosome", "Position", "Exon"))) |> 
-        mutate(across(where(is.double), ~ round(.,2)))
+        select(dplyr::any_of(c("Chr", "Start", "End", "GC_content", "Mappability", "NRC_poolNorm", "Log2R", "SegMean", "Class", "Chromosome", "Position", "Exon"))) |> 
+        mutate(dplyr::across(dplyr::where(is.double), ~ round(.,2)))
       
       if(is.null(file_data_1$Position)) {
         file_data_1 <- file_data_1 |> 
@@ -219,7 +211,7 @@ server <- function(input, output, session) {
         fill=T, quote="\"") 
       
       fast_call_1 <- fast_call_1 |> 
-        select(any_of(c("Chr", "Chromosome","Start", "End", "Mutation", "CN", "Call",  "ProbCall")))
+        select(dplyr::any_of(c("Chr", "Chromosome","Start", "End", "Mutation", "CN", "Call",  "ProbCall")))
       if(is.null(fast_call_1$Mutation)){
         fast_call_1 <- fast_call_1 |> 
           mutate(Mutation = case_when(
@@ -252,8 +244,8 @@ server <- function(input, output, session) {
     }
     else{
       file_data_2 <- utils::read.table(input$HSLM_2$datapath, fill=T, quote="\"", sep="\t", h = T) |> 
-        select(any_of(c("Chr", "Start", "End", "GC_content", "Mappability", "NRC_poolNorm", "Log2R", "SegMean", "Class", "Chromosome", "Position", "Exon"))) |> 
-        mutate(across(where(is.double), ~ round(.,2)))
+        select(dplyr::any_of(c("Chr", "Start", "End", "GC_content", "Mappability", "NRC_poolNorm", "Log2R", "SegMean", "Class", "Chromosome", "Position", "Exon"))) |> 
+        mutate(dplyr::across(dplyr::where(is.double), ~ round(.,2)))
       
       if(is.null(file_data_2$Position)) {
         file_data_2 <- file_data_2 |> 
@@ -300,7 +292,7 @@ server <- function(input, output, session) {
         fill=T, quote="\"") 
       
       fast_call_2 <- fast_call_2 |> 
-        select(any_of(c("Chr", "Chromosome","Start", "End", "Mutation", "CN", "Call",  "ProbCall")))
+        select(dplyr::any_of(c("Chr", "Chromosome","Start", "End", "Mutation", "CN", "Call",  "ProbCall")))
       if(is.null(fast_call_2$Mutation)){
         fast_call_2 <- fast_call_2 |> 
           mutate(Mutation = case_when(
@@ -333,8 +325,8 @@ server <- function(input, output, session) {
     }
     else{
       file_data_3 <- utils::read.table(input$HSLM_3$datapath, fill=T, quote="\"", sep="\t", h = T) |> 
-        select(any_of(c("Chr", "Start", "End", "GC_content", "Mappability", "NRC_poolNorm", "Log2R", "SegMean", "Class", "Chromosome", "Position", "Exon"))) |> 
-        mutate(across(where(is.double), ~ round(.,2)))
+        select(dplyr::any_of(c("Chr", "Start", "End", "GC_content", "Mappability", "NRC_poolNorm", "Log2R", "SegMean", "Class", "Chromosome", "Position", "Exon"))) |> 
+        mutate(dplyr::across(dplyr::where(is.double), ~ round(.,2)))
       
       if(is.null(file_data_3$Position)) {
         file_data_3 <- file_data_3 |> 
@@ -382,7 +374,7 @@ server <- function(input, output, session) {
         fill=T, quote="\"") 
       
       fast_call_3 <- fast_call_3 |> 
-        select(any_of(c("Chr", "Chromosome","Start", "End", "Mutation", "CN", "Call",  "ProbCall")))
+        select(dplyr::any_of(c("Chr", "Chromosome","Start", "End", "Mutation", "CN", "Call",  "ProbCall")))
       if(is.null(fast_call_3$Mutation)){
         fast_call_3 <- fast_call_3 |> 
           mutate(Mutation = case_when(
@@ -806,19 +798,19 @@ shapes <- shiny::reactive({
 
    x <- shiny::reactiveValues(val = 1)
    
-   observeEvent(input$Button_1, {
+   shiny::observeEvent(input$Button_1, {
      x$val = x$val *(-1) 
    })
    
-   output$Button_1  =renderUI({
+   output$Button_1  =shiny::renderUI({
      if(x$val == 1){
-      actionButton("Button_1", "Add new sample")
+      shiny::actionButton("Button_1", "Add new sample")
        }
-     else { actionButton("Button_1", "Remove sample")}
+     else { shiny::actionButton("Button_1", "Remove sample")}
    })
    
    
-    output$Second_Individual=renderUI({
+    output$Second_Individual=shiny::renderUI({
       if(x$val == -1){list(
         
         shiny::fileInput("FastCall_Results_2", "Load the CNV calls file"),
@@ -837,7 +829,7 @@ shapes <- shiny::reactive({
     
     z <- shiny::reactiveValues(val = 1)
     
-    observeEvent(input$Button_2, {
+    shiny::observeEvent(input$Button_2, {
       z$val = z$val *(-1) 
     })
     
@@ -848,18 +840,18 @@ shapes <- shiny::reactive({
       else if (is.null(fast_call_2())){return(NULL)}
       
       else if (z$val == 1){
-        actionButton("Button_2", "Add new sample") }
+        shiny::actionButton("Button_2", "Add new sample") }
       
-      else { actionButton("Button_2", "Remove sample")} 
+      else { shiny::actionButton("Button_2", "Remove sample")} 
     })
     
-    output$Button_2  <- renderUI({
+    output$Button_2  <- shiny::renderUI({
       K = A()
       return(K)
     }) 
     
     
-    output$Third_Individual=renderUI({
+    output$Third_Individual=shiny::renderUI({
       if(z$val == -1){list(
         
         shiny::fileInput("FastCall_Results_3", "Load the CNV calls file"),
@@ -873,12 +865,12 @@ shapes <- shiny::reactive({
 
 # Setting the range slider for coordinates------------------------------------------------
    
-output$limits=renderUI({
+output$limits=shiny::renderUI({
       if (is.null(input$FastCall_Results_1)|input$Genome == "") {
         return(NULL)}
       else{
         
-        sliderInput('slider','Choose the chromosome coordinates for the download',
+        shiny::sliderInput('slider','Choose the chromosome coordinates for the download',
           min=1,
           max=Coordinates()$End,
           value=c(1,
@@ -890,11 +882,11 @@ output$limits=renderUI({
 # Setting the range slider for annotations --------------------------------
 
     
-    output$Annotations_limits=renderUI({
+    output$Annotations_limits=shiny::renderUI({
       if (!is.null(input$FastCall_Results_1)){
         if(!(is.null(CNV3()))){
           if (dim(CNV3())[1] >0){
-            sliderInput('slider_Annotations',
+            shiny::sliderInput('slider_Annotations',
             'Choose the maximum number of overlapping CNVs to visualize',
             min=0,
             max=max(CNV3()$level),
@@ -911,10 +903,10 @@ output$limits=renderUI({
 # Download ----------------------------------------------------------------
 
 
-output$Download = renderUI({
+output$Download = shiny::renderUI({
   if (!is.null(input$FastCall_Results_1)){
     if (input$Genome  != ""){
-      downloadButton("downloadplot", "Download HTML")}
+      shiny::downloadButton("downloadplot", "Download HTML")}
   }
   else{return(NULL)}
   })
@@ -1038,7 +1030,7 @@ if(!(is.null(input$FastCall_Results_1) | is.null(input$slider_Annotations[1])|
   if (dim(CNV_Gain)[1] >0){
     rect <- append(rect, rect_CNV_Gain)
   }
- fig <- plot_ly() |> 
+ fig <-  plotly::plot_ly() |> 
    plotly::layout(shapes = rect, xaxis = list(title = "Chromosome coordinates",
        range = c(min=input$slider[1], 
        max=input$slider[2])),
@@ -1060,7 +1052,7 @@ if(!(is.null(input$FastCall_Results_1) | is.null(input$slider_Annotations[1])|
   }
   }
   else{
-    fig <- plot_ly(type = 'scatter', mode = "markers") |> 
+    fig <-  plotly::plot_ly(type = 'scatter', mode = "markers") |> 
       plotly::layout( yaxis = list(range =list(0, 20))) |> 
       plotly::partial_bundle()  |>  plotly::toWebGL()
   }
@@ -1072,7 +1064,7 @@ else{return(NULL)}
 
 # Plot genes annotations --------------------------------------------------
 if(input$GenomeBrowser){
-  fig2 <- plot_ly(data = genes_annotations(), type = 'scatter', mode = 'markers', x =  ~middle_gene, y = ~level, color = I("#008000"),
+  fig2 <-  plotly::plot_ly(data = genes_annotations(), type = 'scatter', mode = 'markers', x =  ~middle_gene, y = ~level, color = I("#008000"),
           text = ~paste(" RefSeq ID:", RefSeq_ID, "<br>", "Gene Symbol:", Gene_Symbol, 
           "<br>","Start:", Start, "<br>", "End:", End),
           hoverinfo = "text", marker =list(size = 2), showlegend = FALSE,
@@ -1208,7 +1200,7 @@ if(!is.null(exons_annotations())){
        }  
   
        
-       pl_1<- plot_ly(data = rects_1_range(),  x =  ~End ) 
+       pl_1<-  plotly::plot_ly(data = rects_1_range(),  x =  ~End ) 
        
        
        if(!is.null(subset_data_1_range())){
@@ -1584,7 +1576,7 @@ if(!is.null(exons_annotations())){
        
        
       
-       pl_2<- plot_ly(data = rects_2_range(),  x =  ~End ) 
+       pl_2<-  plotly::plot_ly(data = rects_2_range(),  x =  ~End ) 
        
        
        if(!is.null(subset_data_2_range())){
@@ -1886,7 +1878,7 @@ if(!is.null(exons_annotations())){
   
        
        
-       pl_3<- plot_ly(data = rects_3_range(),  x =  ~End ) 
+       pl_3<-  plotly::plot_ly(data = rects_3_range(),  x =  ~End ) 
        
        
        if(!is.null(subset_data_3_range())){
@@ -2120,13 +2112,13 @@ if(!is.null(exons_annotations())){
                      )
     
     
-    output$downloadplot <- downloadHandler(
+    output$downloadplot <- shiny::downloadHandler(
       filename = function() {
         paste(Sys.Date(), " ", input$chr," Coordinates", " ", input$slider[1],"-", input$slider[2],  ".html", sep = "")
       },
       content = function(file) {
         # export plotly html widget as a temp file to download.
-        htmlwidgets::saveWidget(plotly::as_widget(isolate(session_store$plt)), file, selfcontained = TRUE)
+        htmlwidgets::saveWidget(plotly::as_widget(shiny::isolate(session_store$plt)), file, selfcontained = TRUE)
         rv$download_flag <- rv$download_flag + 1
       }
     )

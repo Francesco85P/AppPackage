@@ -7,10 +7,10 @@
 Plot_Visualization(...)
 }
 \arguments{
-\item{No}{params}
+\item{...}{Additional arguments passed to \code{shinyApp()}. Currently unused.}
 }
 \value{
-A shiny App
+Runs a Shiny application in the default web browser.
 }
 \description{
 Plot CNVs
